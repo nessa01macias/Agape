@@ -11,8 +11,10 @@
 
 .pricing__title {
   margin-top: 20px;
-  font-size: var(--t-display);
-  max-width: 14ch;
+  /* One line at every width — it scales down rather than wrapping. */
+  font-size: clamp(25px, 5.3vw, 72px);
+  white-space: nowrap;
+  max-width: none;
 }
 
 .pricing__card {

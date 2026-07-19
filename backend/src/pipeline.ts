@@ -7,7 +7,9 @@
    moment later — without the buffer the first few events vanish.
    --------------------------------------------------------------- */
 
+import { randomUUID } from 'node:crypto'
 import { scrape, ScrapeError, type Scraped } from './scrape.ts'
+import { startRender } from './render.ts'
 import { fallbackPlan, planVideo, type VideoPlan } from './plan.ts'
 
 export type StageId = 'scout' | 'curator' | 'strategist' | 'writer' | 'director'
@@ -33,7 +35,7 @@ export type JobEvent =
   | { type: 'script'; line: string }
   | { type: 'frame'; index: number; title: string }
   | { type: 'progress'; value: number }
-  | { type: 'done'; projectId: string }
+  | { type: 'done'; projectId: string; renderId?: string }
   | { type: 'error'; message: string }
 
 export type Subscriber = (event: JobEvent) => void
@@ -49,6 +51,8 @@ export type Job = {
   scene: { brandName: string; domain: string; accent: string } | null
   /** What the model decided to cut. Null until the strategist runs. */
   plan: VideoPlan | null
+  /** The rendered MP4, once the director has actually produced one. */
+  renderId: string | null
 }
 
 const jobs = new Map<string, Job>()
@@ -87,6 +91,7 @@ export function createJob(id: string, url: string): Job {
     format: null,
     scene: null,
     plan: null,
+    renderId: null,
   }
 
   jobs.set(id, job)
@@ -101,9 +106,14 @@ async function run(job: Job): Promise<void> {
     await strategise(job, site)
     await write(job, site)
     await direct(job, site)
+    await renderCut(job)
 
     emit(job, { type: 'progress', value: 1 })
-    emit(job, { type: 'done', projectId: job.id })
+    emit(job, {
+      type: 'done',
+      projectId: job.id,
+      ...(job.renderId ? { renderId: job.renderId } : {}),
+    })
   } catch (cause) {
     const message =
       cause instanceof ScrapeError
@@ -127,6 +137,9 @@ const SHOTS = Number(process.env.AGAPE_SCREENSHOTS ?? 2)
 
 /** How many of the page's own images to hand the UI to animate with. */
 const FOOTAGE = 6
+
+/** Matches the Remotion composition in frontend/src/remotion/constants.ts. */
+const VIDEO_LABEL = '210 frames at 1920x1080'
 
 async function scout(job: Job): Promise<Scraped> {
   emit(job, { type: 'stage', stage: 'scout', status: 'working', label: 'Reading the site' })
@@ -299,6 +312,50 @@ async function direct(job: Job, site: Scraped): Promise<void> {
     emit(job, { type: 'frame', index, title: shot.title })
   }
 
-  emit(job, { type: 'progress', value: 0.94 })
-  emit(job, { type: 'stage', stage: 'director', status: 'done', label: 'Storyboard ready' })
+  emit(job, { type: 'progress', value: 0.80 })
+}
+
+/**
+ * The actual render. Until this existed the job reported "ready" the
+ * moment the *plan* was written, which meant the loading screen finished
+ * before anything had been produced. Now `done` means an MP4 exists on
+ * disk, and the progress the user watches is Remotion's real frame
+ * count rather than a script.
+ */
+async function renderCut(job: Job): Promise<void> {
+  if (!job.scene) return
+
+  emit(job, { type: 'stage', stage: 'director', status: 'working', label: 'Rendering the cut' })
+
+  const [eyebrow, tagline, footer] = job.plan?.script ?? []
+  const id = randomUUID()
+  const render = startRender(id, {
+    ...job.scene,
+    ...(eyebrow ? { eyebrow } : {}),
+    ...(tagline ? { tagline } : {}),
+    ...(footer ? { footer } : {}),
+  })
+
+  emit(job, { type: 'log', message: `Rendering ${VIDEO_LABEL}` })
+
+  // Poll rather than subscribe: renderMedia reports through a callback on
+  // its own job object, and one queue means we may sit in `queued` first.
+  let reported = 0.8
+  while (render.status === 'queued' || render.status === 'rendering') {
+    await pause(400)
+    const value = 0.8 + render.progress * 0.19
+    if (value - reported >= 0.01) {
+      reported = value
+      emit(job, { type: 'progress', value })
+    }
+  }
+
+  if (render.status === 'error') {
+    throw new Error(render.error ?? 'The render failed')
+  }
+
+  job.renderId = id
+  emit(job, { type: 'log', message: 'Encoded to H.264' })
+  emit(job, { type: 'progress', value: 0.99 })
+  emit(job, { type: 'stage', stage: 'director', status: 'done', label: 'Cut rendered' })
 }

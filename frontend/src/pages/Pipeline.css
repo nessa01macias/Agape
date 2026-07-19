@@ -13,9 +13,11 @@
 
 .pipe {
   position: relative;
-  min-height: 100svh;
+  /* Fixed, not min-height: the whole screen has to fit without scrolling,
+     so anything that overflows scrolls inside its own column. */
+  height: 100svh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
 }
 
@@ -146,6 +148,7 @@
 /* main grid ----------------------------------------------------- */
 
 .pipe__grid-main {
+  min-height: 0;
   width: 100%;
   max-width: var(--page);
   margin-inline: auto;
@@ -156,11 +159,11 @@
   /* The window earns the height — a short card floating in a tall dark
      page reads as a stall, which is the one thing this screen can't do. */
   align-items: stretch;
-  min-height: 0;
 }
 
 .pipe__window {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -168,11 +171,11 @@
 .pipe__stage {
   position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 22px;
-  min-height: min(52vh, 400px);
 }
 
 /* ACT I — their site, being read --------------------------------- */
@@ -202,7 +205,28 @@
   height: 100%;
   object-fit: cover;
   object-position: top center;
+  /* Most sites are white. At full brightness one blows a hole in a dark
+     screen and the lime scan line vanishes against it — so the page is
+     held down to something the UI can sit on top of. */
+  z-index: 0;
+  filter: brightness(0.52) saturate(0.85) contrast(1.06);
   animation: shot-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* A teal wash ties the page into the rest of the screen. */
+/* A pseudo-element paints as the last child, so it needs an explicit
+   layer or it buries the detection marks and the scan line. */
+.site.has-shot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(37, 69, 74, 0.28),
+    rgba(9, 9, 9, 0.55)
+  );
 }
 
 @keyframes shot-reveal {
@@ -214,6 +238,7 @@
 
 .site__block {
   position: relative;
+  z-index: 2;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.07);
   animation: site-read 2.6s ease-in-out infinite;
@@ -292,6 +317,7 @@
 
 .site__scan {
   position: absolute;
+  z-index: 3;
   left: 0;
   right: 0;
   height: 1px;
@@ -655,13 +681,17 @@
 
 /* the finished cut ----------------------------------------------- */
 
-.pipe.is-done .site,
-.pipe.is-done .board {
+/* The whole canvas goes, not just its contents — an empty flex:1 box
+   still claims its share and shoves the result off the bottom. */
+.pipe.is-done .pipe__canvas {
   display: none;
 }
 
+/* With the canvas gone this is the only thing in the stage, so it takes
+   the room and sits in the middle of it. */
 .pipe__result {
   flex: 1;
+  align-content: center;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 28px;
@@ -688,9 +718,15 @@
 
 /* crew ----------------------------------------------------------- */
 
+/* `min-height: 0` lets this column shrink below its content and scroll.
+   Without it the tray's page shots force the whole grid row taller than
+   the viewport, which drags the window's bottom — reel and timeline —
+   off screen. */
 .pipe__side {
-  position: sticky;
-  top: 26px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .pipe__crew {
@@ -756,14 +792,17 @@
 
 /* A rendered page shot — the most convincing artifact we have, so it gets
    to be an image rather than a line of text. */
+/* Two up. The landing shot already fills the stage at full size, so the
+   tray only needs to say "we also grabbed these". */
 .chip--shot {
-  flex: 1 1 100%;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 0;
   margin: 0;
-  padding: 6px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  border-radius: 12px;
+  gap: 6px;
+  border-radius: 10px;
 }
 
 .chip--shot img {
@@ -772,7 +811,7 @@
   aspect-ratio: 16 / 10;
   object-fit: cover;
   object-position: top center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -816,105 +855,6 @@
 .pipe__line[data-latest] {
   color: var(--lime);
   opacity: 1;
-}
-
-/* the beat — the one moment nothing moves ------------------------ */
-
-.pipe[data-beat] .site__block,
-.pipe[data-beat] .site__scan,
-.pipe[data-beat] .pipe__glow {
-  animation-play-state: paused;
-}
-
-.beat {
-  position: fixed;
-  inset: 0;
-  z-index: 25;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  text-align: center;
-  padding: var(--gutter);
-  background: rgba(9, 9, 9, 0.84);
-  backdrop-filter: blur(16px) saturate(120%);
-  animation: beat-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes beat-in {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0) saturate(100%);
-  }
-}
-
-.beat__eyebrow {
-  font-size: 13px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.beat__format {
-  margin-top: 14px;
-  font-size: clamp(30px, 5vw, 58px);
-  letter-spacing: -0.03em;
-  background: linear-gradient(100deg, var(--lime) 20%, var(--yellow) 85%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
-}
-
-.beat__reason {
-  margin-top: 20px;
-  max-width: 46ch;
-  font-size: 16px;
-  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
-}
-
-/* An escape hatch, not a question — a link, so nobody has to press it. */
-.beat__switch {
-  margin-top: 26px;
-  border: 0;
-  background: none;
-  padding: 4px;
-  font-size: 14px;
-  color: var(--text-dim);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  cursor: pointer;
-  animation: rise-in 520ms ease 420ms both;
-}
-
-.beat__switch:hover {
-  color: var(--text-hi);
-}
-
-.beat__options {
-  margin-top: 26px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.beat__option {
-  padding: 11px 18px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 14px;
-  color: var(--text-hi);
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease;
-}
-
-.beat__option:hover {
-  background: rgba(169, 255, 103, 0.12);
-  border-color: rgba(169, 255, 103, 0.5);
 }
 
 /* failure -------------------------------------------------------- */

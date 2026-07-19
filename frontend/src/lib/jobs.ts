@@ -38,7 +38,8 @@ export type JobEvent =
   | { type: 'script'; line: string }
   | { type: 'frame'; index: number; title: string }
   | { type: 'progress'; value: number }
-  | { type: 'done'; projectId: string }
+  /** `renderId` is present once an MP4 has actually been produced. */
+  | { type: 'done'; projectId: string; renderId?: string }
   | { type: 'error'; message: string }
 
 export async function createProject(url: string): Promise<Job> {

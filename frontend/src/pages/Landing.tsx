@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Bento } from '../components/Bento'
 import { Close } from '../components/Close'
 import { Footer } from '../components/Footer'
+import { Founders } from '../components/Founders'
 import { Hero } from '../components/Hero'
 import { Nav } from '../components/Nav'
 import { Pricing } from '../components/Pricing'
@@ -26,6 +27,7 @@ export function Landing() {
         <Hero onAnalyze={handleAnalyze} />
         <Sequence />
         <Bento />
+        <Founders />
         <Pricing />
         <Close />
       </main>

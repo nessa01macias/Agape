@@ -1,0 +1,143 @@
+.founders {
+  position: relative;
+  background: linear-gradient(180deg, #090909 0%, #0c1a1d 60%, #090909 100%);
+}
+
+.founders__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.founders__title {
+  margin-top: 20px;
+  font-size: clamp(28px, 4.2vw, 58px);
+  max-width: 22ch;
+}
+
+.founders__lede {
+  margin-top: 20px;
+  max-width: 46ch;
+}
+
+.founders__grid {
+  list-style: none;
+  margin: clamp(44px, 6vw, 76px) 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+.fdr {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 30px 18px 26px;
+  border-radius: var(--panel-radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  transition:
+    transform 0.4s var(--ease-out),
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.fdr:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-strong);
+  background: var(--panel-2);
+}
+
+/* Initial in a teal disc — the editor's active colour. */
+.fdr__face {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(150deg, var(--clip), var(--teal-active));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 22px;
+  font-weight: 500;
+  color: #fff;
+  transition: box-shadow 0.4s var(--ease-out);
+}
+
+.fdr:hover .fdr__face {
+  box-shadow: 0 0 26px -6px rgba(159, 190, 195, 0.7);
+}
+
+.fdr__name {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-hi);
+  letter-spacing: -0.01em;
+}
+
+.fdr__role {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+.fdr__in {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--link);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.fdr:hover .fdr__in {
+  background: var(--teal-active);
+  color: #fff;
+}
+
+.fdr__in svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.fdr__in i {
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  .founders__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .founders__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .fdr {
+    padding: 24px 12px 20px;
+  }
+
+  .fdr__face {
+    width: 48px;
+    height: 48px;
+    font-size: 19px;
+  }
+}

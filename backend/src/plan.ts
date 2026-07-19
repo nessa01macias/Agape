@@ -79,7 +79,7 @@ const planSchema = {
     accent: {
       type: Type.STRING,
       description:
-        'The brand accent colour as #rrggbb, read off the screenshots. Pick the colour a viewer would name as "theirs" — not a background grey or near-black.',
+        'The brand accent colour as #rrggbb, read off the screenshots. Pick the colour a viewer would name as "theirs" — look at their primary buttons, links, logo mark, and highlights, not at the page background. A dark page usually still has a real accent somewhere; find it rather than defaulting to a neutral. This colour is drawn as small text and a dot on a near-black stage, so it must be bright enough to read there: never black, near-black, or a dark grey. Answer #fafafa only when the brand genuinely has no colour at all — a strictly black-and-white identity with no coloured button, link, or logo anywhere on the page.',
     },
     titles: {
       type: Type.OBJECT,
@@ -89,7 +89,7 @@ const planSchema = {
         eyebrow: {
           type: Type.STRING,
           description:
-            'Two or three words above the brand name, uppercase — e.g. "INTRODUCING", "NOW LIVE", "MEET". Not a sentence.',
+            'A complete standalone label of one to three words that sits above the brand name, uppercase — e.g. "INTRODUCING", "NOW LIVE", "MEET", "OUT NOW". It must read as a finished phrase on its own: never the opening words of a sentence that continues elsewhere, and never a fragment ending in a possessive or article.',
         },
         tagline: {
           type: Type.STRING,
@@ -107,11 +107,11 @@ const planSchema = {
     },
     shots: {
       type: Type.ARRAY,
-      description: `Three shots. durationInFrames must sum to ${TOTAL_FRAMES} at ${FPS}fps.`,
+      description: `Three shots in screen order. durationInFrames must sum to exactly ${TOTAL_FRAMES} at ${FPS}fps — vary them to suit the pacing you want rather than splitting the time evenly.`,
       items: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING, description: 'Four words or fewer.' },
+          title: { type: Type.STRING, description: 'Four words or fewer, in sentence case.' },
           description: { type: Type.STRING, description: 'One sentence on what is on screen.' },
           durationInFrames: { type: Type.INTEGER },
         },
@@ -177,6 +177,44 @@ async function fetchImage(
 
 const HEX = /^#[0-9a-f]{6}$/i
 
+/** Perceived brightness, 0–1. Weighted for how the eye reads each channel. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+function saturation(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  return max === 0 ? 0 : (max - min) / max
+}
+
+/**
+ * The accent is drawn as text and as a small dot on a near-black stage,
+ * so a dark answer renders as nothing at all. Monochrome brands are the
+ * common case — Vercel's honest accent is #000000, which would be
+ * invisible — and for those the brand reads as white on dark. Anything
+ * else dark just gets lifted until it's legible.
+ */
+function legibleAccent(hex: string): string {
+  if (luminance(hex) >= 0.18) return hex
+
+  // Greyscale brand: on this background their colour *is* white.
+  if (saturation(hex) < 0.15) return '#fafafa'
+
+  // Saturated but dark — keep the hue, raise it until it reads.
+  const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  const peak = Math.max(...channels, 1)
+  const scale = Math.min(255 / peak, 0.55 / Math.max(luminance(hex), 0.01))
+  return (
+    '#' +
+    channels
+      .map((c) => Math.round(Math.min(255, c * scale)).toString(16).padStart(2, '0'))
+      .join('')
+  )
+}
+
 /**
  * The model is asked for a well-formed plan, but a plan that renders is
  * our problem, not its. Clamp everything the composition depends on.
@@ -226,9 +264,11 @@ function coerce(raw: unknown, site: Scraped): VideoPlan | null {
     })
   }
 
-  const accent = typeof p.accent === 'string' && HEX.test(p.accent.trim())
-    ? p.accent.trim().toLowerCase()
-    : site.accent
+  const chosen =
+    typeof p.accent === 'string' && HEX.test(p.accent.trim())
+      ? p.accent.trim().toLowerCase()
+      : site.accent
+  const accent = legibleAccent(chosen)
 
   return {
     format: typeof p.format === 'string' && p.format ? p.format : 'Launch teaser — 7s, 16:9',

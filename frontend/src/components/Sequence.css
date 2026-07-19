@@ -110,9 +110,13 @@
   border-color: transparent transparent transparent #fff;
 }
 
+/* Lowest-priority bar content: these collapse first when space is tight,
+   so Share/Render can never be the things that get clipped. */
 .ed__menu {
   display: flex;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .ed__menu i {

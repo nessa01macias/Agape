@@ -12,28 +12,21 @@
      II  TURN    the site collapses into clips on a timeline
      III BUILD   the shots get assembled, ending on a poster
 
-   The turn happens on the `decision` event, which is also the one beat
-   where everything else stops. Nothing here is invented: the frames,
-   the script lines and the accent colour are the same ones the Remotion
-   scene renders, so the user recognises every shot when it plays.
+   The turn happens on the `decision` event. It all stays inside the one
+   window — no overlay, no confirmation step — so the run reads as a
+   single continuous take that ends on the finished cut.
+
+   Nothing here is invented: the stills, the script lines and the accent
+   colour are the same ones the Remotion scene renders, so the user
+   recognises every shot when it plays.
    --------------------------------------------------------------- */
 
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { useJob } from '../hooks/useJob'
-import { setProjectFormat, type Artifact } from '../lib/jobs'
+import type { Artifact } from '../lib/jobs'
 import './Pipeline.css'
-
-/** How long the decision holds the screen before the build resumes. */
-const BEAT_MS = 2600
-
-/** Formats the user can redirect to. Mock-only until the backend lands. */
-const ALTERNATIVES = [
-  'Product demo — 30s, 16:9',
-  'Vertical teaser — 15s, 9:16',
-  'Feature tour — 45s, 16:9',
-]
 
 /** Deterministic waveform — matches the Showcase mock, no Math.random. */
 const WAVE = Array.from({ length: 64 }, (_, i) => {
@@ -74,30 +67,8 @@ export function Pipeline() {
     if (!url) navigate('/', { replace: true })
   }, [url, navigate])
 
-  // The decision holds the screen, then hands it back to the build.
-  const [beat, setBeat] = useState(false)
-  const [format, setFormat] = useState<string | null>(null)
-  const [picking, setPicking] = useState(false)
-
-  useEffect(() => {
-    if (!decision) return
-    setFormat(decision.format)
-    setBeat(true)
-  }, [decision])
-
-  // Auto-dismiss — but hold the beat open while they're browsing formats,
-  // otherwise the menu closes under their cursor.
-  useEffect(() => {
-    if (!beat || picking) return
-    const id = setTimeout(() => setBeat(false), BEAT_MS)
-    return () => clearTimeout(id)
-  }, [beat, picking])
-
-  // The turn waits for the beat to lift. Otherwise the site collapses into
-  // clips behind the overlay and nobody ever sees it — which would waste
-  // the one second that explains what this product does.
   const act: 'read' | 'build' | 'done' =
-    phase === 'done' ? 'done' : decision && !beat ? 'build' : 'read'
+    phase === 'done' ? 'done' : decision ? 'build' : 'read'
 
   /**
    * The first rendered page shot the curator sends back. Only screenshots
@@ -155,7 +126,6 @@ export function Pipeline() {
     <div
       className={`pipe is-${act}`}
       style={{ '--accent': job.scene.accent } as React.CSSProperties}
-      data-beat={beat ? 'true' : undefined}
     >
       <div className="pipe__bg" aria-hidden="true">
         <span className="pipe__glow pipe__glow--teal" />
@@ -174,7 +144,9 @@ export function Pipeline() {
           <Logo size={24} />
         </a>
         <span className="pipe__host">{job.scene.domain}</span>
-        {format && !beat && <span className="pipe__format">{format}</span>}
+        {decision && (
+          <span className="pipe__format">{decision.format}</span>
+        )}
         <span className="pipe__clock" aria-hidden="true">
           {elapsed}
         </span>
@@ -406,43 +378,6 @@ export function Pipeline() {
         ))}
       </div>
 
-      {/* The one moment the screen stops moving. */}
-      {beat && format && (
-        <div className="beat" aria-live="polite">
-          <p className="beat__eyebrow">Making you a</p>
-          <h2 className="beat__format">{format}</h2>
-          {decision && <p className="beat__reason">{decision.reason}</p>}
-
-          {picking ? (
-            <div className="beat__options">
-              {ALTERNATIVES.map((option) => (
-                <button
-                  type="button"
-                  className="beat__option"
-                  key={option}
-                  onClick={() => {
-                    setFormat(option)
-                    setPicking(false)
-                    // Optimistic on purpose — the pipeline keeps going
-                    // either way, so a failed PATCH mustn't stall the UI.
-                    if (job.job) setProjectFormat(job.job, option)
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="beat__switch"
-              onClick={() => setPicking(true)}
-            >
-              not this?
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }

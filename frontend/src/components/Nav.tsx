@@ -7,6 +7,7 @@ import './Nav.css'
 const LINKS = [
   { label: 'How it works', href: '#how' },
   { label: 'What you get', href: '#what' },
+  { label: 'Founders', href: '#founders' },
   { label: 'Pricing', href: '#pricing' },
 ]
 
