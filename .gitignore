@@ -232,3 +232,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .gstack/
+
+# Python "lib/" rule above must not swallow frontend source
+!frontend/src/lib/
