@@ -78,34 +78,34 @@ export function Sequence() {
             <p className="seq__sub lede">Agape builds the whole timeline.</p>
           </header>
 
-          <div className="ed">
+          <div className="mock">
             {/* menu bar */}
-            <div className="ed__bar">
-              <span className="ed__mark" aria-hidden="true" />
-              <span className="ed__menu">
+            <div className="mock__bar">
+              <span className="mock__mark" aria-hidden="true" />
+              <span className="mock__menu">
                 {['File', 'View', 'Composition'].map((item) => (
                   <i key={item}>{item}</i>
                 ))}
               </span>
-              <span className="ed__file">
+              <span className="mock__file">
                 untitled-project <s>/</s> <b>composition</b>
               </span>
-              <span className="ed__actions">
-                <i className="ed__share">Share</i>
-                <i className="ed__render" style={cue(0.88, 10)}>
+              <span className="mock__actions">
+                <i className="mock__share">Share</i>
+                <i className="mock__render" style={cue(0.88, 10)}>
                   Render
                 </i>
               </span>
             </div>
 
             {/* sidebar · preview · inspector */}
-            <div className="ed__main">
-              <div className="ed__side panel">
-                <span className="ed__tabs">
+            <div className="mock__main">
+              <div className="mock__side panel">
+                <span className="mock__tabs">
                   <i className="is-on">Agents</i>
                   <i>Assets</i>
                 </span>
-                <ol className="ed__stages">
+                <ol className="mock__stages">
                   {STAGES.map((stage) => (
                     <li className="stage" key={stage.name} style={cue(stage.at)}>
                       <span className="stage__dot" aria-hidden="true" />
@@ -116,33 +116,33 @@ export function Sequence() {
                 </ol>
               </div>
 
-              <div className="ed__preview">
-                <div className="ed__frame">
-                  <span className="ed__label">PREVIEW</span>
-                  <span className="ed__poster" aria-hidden="true" />
-                  <span className="ed__crop" style={cue(0.78, 7)} aria-hidden="true">
+              <div className="mock__preview">
+                <div className="mock__frame">
+                  <span className="mock__label">PREVIEW</span>
+                  <span className="mock__poster" aria-hidden="true" />
+                  <span className="mock__crop" style={cue(0.78, 7)} aria-hidden="true">
                     <b>9:16</b>
                   </span>
-                  <span className="ed__caption" style={cue(0.84)}>
+                  <span className="mock__caption" style={cue(0.84)}>
                     ship it <b>tonight</b>
                   </span>
                 </div>
-                <div className="ed__transport tnum">
-                  <span className="ed__time">
+                <div className="mock__transport tnum">
+                  <span className="mock__time">
                     00:01<s>.12</s>
                   </span>
-                  <i className="ed__play" aria-hidden="true" />
+                  <i className="mock__play" aria-hidden="true" />
                 </div>
               </div>
 
-              <div className="ed__inspector panel">
-                <span className="ed__tabs">
+              <div className="mock__inspector panel">
+                <span className="mock__tabs">
                   <i className="is-on">Inspector</i>
                 </span>
-                <div className="ed__props">
+                <div className="mock__props">
                   <b>main</b>
                   {INSPECTOR.map((row) => (
-                    <span className="ed__prop" key={row.k} style={cue(row.at)}>
+                    <span className="mock__prop" key={row.k} style={cue(row.at)}>
                       <i>{row.k}</i>
                       <em className="tnum">{row.v}</em>
                     </span>
@@ -152,11 +152,11 @@ export function Sequence() {
             </div>
 
             {/* timeline */}
-            <div className="ed__timeline panel">
-              <div className="ed__tl-bar">
-                <span className="ed__tc tnum">00:01:12:08</span>
-                <span className="ed__tc-total tnum">/ 00:00:05:00</span>
-                <span className="ed__tools" aria-hidden="true">
+            <div className="mock__timeline panel">
+              <div className="mock__tl-bar">
+                <span className="mock__tc tnum">00:01:12:08</span>
+                <span className="mock__tc-total tnum">/ 00:00:05:00</span>
+                <span className="mock__tools" aria-hidden="true">
                   {['↖', '↔', '✂', 'T'].map((tool, i) => (
                     <i key={tool} className={i === 0 ? 'is-on' : ''}>
                       {tool}
@@ -165,16 +165,16 @@ export function Sequence() {
                 </span>
               </div>
 
-              <div className="ed__ruler">
-                <span className="ed__gutter" />
-                <span className="ed__ticks tnum">
+              <div className="mock__ruler">
+                <span className="mock__gutter" />
+                <span className="mock__ticks tnum">
                   {TICKS.map((tick) => (
                     <i key={tick}>{tick}</i>
                   ))}
                 </span>
               </div>
 
-              <div className="ed__tracks">
+              <div className="mock__tracks">
                 {[...VIDEO_TRACKS, ...AUDIO_TRACKS].map((track) => (
                   <div className="trk" key={track.label}>
                     <span className="trk__head">
@@ -194,7 +194,7 @@ export function Sequence() {
                     </span>
                   </div>
                 ))}
-                <span className="ed__playhead" aria-hidden="true">
+                <span className="mock__playhead" aria-hidden="true">
                   <b className="tnum">00:01:12</b>
                 </span>
               </div>

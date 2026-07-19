@@ -58,7 +58,7 @@
    The editor window
    --------------------------------------------------------------- */
 
-.ed {
+.mock {
   --t: clamp(0, calc(var(--progress) * 16), 1);
 
   flex: 1;
@@ -81,7 +81,7 @@
 
 /* menu bar ------------------------------------------------------ */
 
-.ed__bar {
+.mock__bar {
   flex: none;
   display: flex;
   align-items: center;
@@ -89,7 +89,7 @@
   padding: 4px 6px;
 }
 
-.ed__mark {
+.mock__mark {
   width: 26px;
   height: 26px;
   flex: none;
@@ -99,7 +99,7 @@
   position: relative;
 }
 
-.ed__mark::after {
+.mock__mark::after {
   content: '';
   position: absolute;
   left: 55%;
@@ -112,14 +112,14 @@
 
 /* Lowest-priority bar content: these collapse first when space is tight,
    so Share/Render can never be the things that get clipped. */
-.ed__menu {
+.mock__menu {
   display: flex;
   gap: 2px;
   min-width: 0;
   overflow: hidden;
 }
 
-.ed__menu i {
+.mock__menu i {
   padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
@@ -127,7 +127,7 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
-.ed__file {
+.mock__file {
   flex: 1;
   text-align: center;
   font-size: 12px;
@@ -137,38 +137,38 @@
   text-overflow: ellipsis;
 }
 
-.ed__file s {
+.mock__file s {
   text-decoration: none;
   color: rgba(255, 255, 255, 0.3);
 }
 
-.ed__file b {
+.mock__file b {
   color: #fff;
   font-weight: 500;
 }
 
-.ed__actions {
+.mock__actions {
   display: flex;
   gap: 8px;
   flex: none;
 }
 
-.ed__share,
-.ed__render {
+.mock__share,
+.mock__render {
   padding: 5px 16px;
   border-radius: 999px;
   font-size: 12px;
   font-style: normal;
 }
 
-.ed__share {
+.mock__share {
   border: 1px solid var(--border-strong);
   background: var(--panel);
   color: rgba(255, 255, 255, 0.85);
 }
 
 /* Goes solid white only once the cut is actually ready. */
-.ed__render {
+.mock__render {
   --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, calc(0.14 + var(--t) * 0.86));
@@ -182,7 +182,7 @@
 
 /* main row ------------------------------------------------------ */
 
-.ed__main {
+.mock__main {
   flex: 1;
   min-height: 0;
   display: grid;
@@ -190,14 +190,14 @@
   gap: 8px;
 }
 
-.ed__tabs {
+.mock__tabs {
   display: flex;
   gap: 5px;
   padding: 9px 9px 0;
   flex: none;
 }
 
-.ed__tabs i {
+.mock__tabs i {
   flex: 1;
   text-align: center;
   padding: 5px 0;
@@ -207,7 +207,7 @@
   color: var(--text-mid);
 }
 
-.ed__tabs i.is-on {
+.mock__tabs i.is-on {
   background: var(--teal-active);
   color: #fff;
   font-weight: 500;
@@ -215,14 +215,14 @@
 
 /* sidebar: the agents ------------------------------------------- */
 
-.ed__side {
+.mock__side {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
 
-.ed__stages {
+.mock__stages {
   list-style: none;
   margin: 0;
   padding: 12px 10px;
@@ -268,7 +268,7 @@
 
 /* preview ------------------------------------------------------- */
 
-.ed__preview {
+.mock__preview {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -276,7 +276,7 @@
   min-height: 0;
 }
 
-.ed__frame {
+.mock__frame {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -288,7 +288,7 @@
   place-items: center;
 }
 
-.ed__label {
+.mock__label {
   position: absolute;
   left: 14px;
   top: 12px;
@@ -298,7 +298,7 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-.ed__poster {
+.mock__poster {
   position: absolute;
   inset: 0;
   opacity: clamp(0, calc((var(--progress) - 0.36) * 6), 1);
@@ -309,7 +309,7 @@
 }
 
 /* the 9:16 re-frame, drawn over the master late in the scrub */
-.ed__crop {
+.mock__crop {
   --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
   position: absolute;
   top: 50%;
@@ -327,7 +327,7 @@
   place-items: start center;
 }
 
-.ed__crop b {
+.mock__crop b {
   margin-top: -9px;
   padding: 2px 9px;
   border-radius: 999px;
@@ -338,7 +338,7 @@
   letter-spacing: 0.04em;
 }
 
-.ed__caption {
+.mock__caption {
   --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
   position: absolute;
   bottom: 7%;
@@ -357,12 +357,12 @@
   transform: translateY(calc((1 - var(--t)) * 8px));
 }
 
-.ed__caption b {
+.mock__caption b {
   color: var(--lime);
   font-weight: 600;
 }
 
-.ed__transport {
+.mock__transport {
   flex: none;
   display: flex;
   align-items: center;
@@ -370,18 +370,18 @@
   gap: 12px;
 }
 
-.ed__time {
+.mock__time {
   font-size: 13px;
   font-weight: 500;
   color: #fff;
 }
 
-.ed__time s {
+.mock__time s {
   text-decoration: none;
   color: rgba(255, 255, 255, 0.4);
 }
 
-.ed__play {
+.mock__play {
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -389,7 +389,7 @@
   position: relative;
 }
 
-.ed__play::after {
+.mock__play::after {
   content: '';
   position: absolute;
   left: 55%;
@@ -402,14 +402,14 @@
 
 /* inspector ----------------------------------------------------- */
 
-.ed__inspector {
+.mock__inspector {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
 
-.ed__props {
+.mock__props {
   padding: 12px 12px;
   display: flex;
   flex-direction: column;
@@ -417,14 +417,14 @@
   overflow: hidden;
 }
 
-.ed__props > b {
+.mock__props > b {
   font-size: 13px;
   font-weight: 600;
   color: #fff;
   padding: 0 6px 9px;
 }
 
-.ed__prop {
+.mock__prop {
   --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
   display: flex;
   justify-content: space-between;
@@ -436,13 +436,13 @@
   transform: translateY(calc((1 - var(--t)) * 5px));
 }
 
-.ed__prop i {
+.mock__prop i {
   font-size: 10.5px;
   font-style: normal;
   color: rgba(255, 255, 255, 0.45);
 }
 
-.ed__prop em {
+.mock__prop em {
   font-size: 10.5px;
   font-style: normal;
   color: #fff;
@@ -450,7 +450,7 @@
 
 /* timeline ------------------------------------------------------ */
 
-.ed__timeline {
+.mock__timeline {
   --gutter-w: 92px;
   flex: none;
   height: clamp(150px, 27vh, 236px);
@@ -459,7 +459,7 @@
   overflow: hidden;
 }
 
-.ed__tl-bar {
+.mock__tl-bar {
   flex: none;
   display: flex;
   align-items: center;
@@ -468,25 +468,25 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.ed__tc {
+.mock__tc {
   font-size: 13px;
   font-weight: 600;
   color: #fff;
   letter-spacing: 0.03em;
 }
 
-.ed__tc-total {
+.mock__tc-total {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.35);
 }
 
-.ed__tools {
+.mock__tools {
   display: flex;
   gap: 3px;
   margin-left: auto;
 }
 
-.ed__tools i {
+.mock__tools i {
   width: 24px;
   height: 24px;
   display: grid;
@@ -497,31 +497,31 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
-.ed__tools i.is-on {
+.mock__tools i.is-on {
   background: #fff;
   color: var(--ink);
 }
 
-.ed__ruler {
+.mock__ruler {
   flex: none;
   display: flex;
   height: 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 }
 
-.ed__gutter {
+.mock__gutter {
   width: var(--gutter-w);
   flex: none;
   border-right: 1px solid var(--border);
 }
 
-.ed__ticks {
+.mock__ticks {
   flex: 1;
   display: flex;
   min-width: 0;
 }
 
-.ed__ticks i {
+.mock__ticks i {
   flex: 1;
   padding: 4px 0 0 6px;
   border-left: 1px solid rgba(255, 255, 255, 0.22);
@@ -530,7 +530,7 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-.ed__tracks {
+.mock__tracks {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -615,7 +615,7 @@
   border: 1.5px solid rgba(255, 255, 255, 0.9);
 }
 
-.ed__playhead {
+.mock__playhead {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -630,7 +630,7 @@
   opacity: clamp(0, calc(var(--progress) * 12), 1);
 }
 
-.ed__playhead b {
+.mock__playhead b {
   position: absolute;
   top: -1px;
   left: 50%;
@@ -649,27 +649,27 @@
    --------------------------------------------------------------- */
 
 @media (max-width: 1080px) {
-  .ed__main {
+  .mock__main {
     grid-template-columns: 160px minmax(0, 1fr);
   }
 
-  .ed__inspector {
+  .mock__inspector {
     display: none;
   }
 }
 
 @media (max-width: 760px) {
-  .ed__main {
+  .mock__main {
     grid-template-columns: 1fr;
   }
 
-  .ed__side,
-  .ed__menu,
-  .ed__file {
+  .mock__side,
+  .mock__menu,
+  .mock__file {
     display: none;
   }
 
-  .ed__timeline {
+  .mock__timeline {
     --gutter-w: 56px;
   }
 }
@@ -687,7 +687,7 @@
     min-height: 0;
   }
 
-  .ed {
+  .mock {
     height: 78vh;
   }
 }
