@@ -14,7 +14,9 @@
   background: linear-gradient(180deg, #090909 0%, #0c1a1d 45%, #25454a 130%);
 }
 
-.ed button {
+/* :where() keeps this reset at class-level specificity so
+   .ed__* rules below can override padding etc. */
+.ed :where(button) {
   font-family: inherit;
   border: none;
   background: none;
@@ -81,17 +83,6 @@
 
 .ed__crumb-sep {
   color: rgba(255, 255, 255, 0.3);
-}
-
-.ed__pill {
-  margin-left: 10px;
-  padding: 2px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--yellow, #f4db5e);
 }
 
 .ed__menubar-actions {
@@ -298,14 +289,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  container-type: size;
 }
 
 .ed__preview {
-  aspect-ratio: 16 / 9;
-  max-width: 100%;
-  max-height: 100%;
-  height: 100%;
-  width: auto;
+  /* Exactly 16:9 within the panel, both axes considered — the player
+     then fills the box edge-to-edge with no letterboxing. */
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  height: min(100cqh, calc(100cqw * 9 / 16));
   border-radius: 20px;
   background: rgba(9, 9, 9, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -338,10 +329,12 @@
 }
 
 .ed__tc {
-  font-size: 16px;
+  /* Poppins has no tabular figures — mono stack keeps digits fixed-width
+     so the readout doesn't shift as numbers change. */
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+  font-size: 15px;
   font-weight: 500;
   color: #fff;
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   margin-right: 6px;
 }
@@ -357,7 +350,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 17px;
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -368,7 +361,7 @@
 .ed__tbtn--play {
   background: #fff;
   color: #090909;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .ed__tbtn--play:hover {
@@ -762,18 +755,18 @@
 }
 
 .ed__clip--solid {
-  background: #2c525a;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #45737e;
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .ed__clip--soft {
-  background: rgba(59, 98, 105, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(103, 158, 168, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .ed__clip--audio {
-  background: rgba(37, 69, 74, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(80, 128, 137, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .ed__clip.is-selected {

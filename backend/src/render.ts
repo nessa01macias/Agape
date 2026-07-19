@@ -21,17 +21,17 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const ENTRY = path.resolve(here, '../../frontend/src/remotion/index.ts')
 export const OUT_DIR = path.resolve(here, '../out')
 
-/** Mirrors `sceneSchema` in frontend/src/remotion/Scene.tsx. */
-export const sceneProps = z.object({
-  brandName: z.string().min(1),
-  domain: z.string().min(1),
-  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'accent must be #rrggbb'),
-  // Optional so a caller can render a bare brand cut; the composition
-  // defaults these when they're absent.
-  eyebrow: z.string().optional(),
-  tagline: z.string().optional(),
-  footer: z.string().optional(),
-})
+/**
+ * Loose mirror of `launchSchema` in frontend/src/remotion/LaunchTemplate.tsx.
+ * Only the identity fields are validated here; the rest (copy, theme,
+ * screenshot) passes through and the composition defaults what's absent.
+ */
+export const sceneProps = z
+  .object({
+    brandName: z.string().min(1),
+    domain: z.string().min(1),
+  })
+  .passthrough()
 
 export type SceneProps = z.infer<typeof sceneProps>
 
@@ -84,7 +84,7 @@ export function startRender(id: string, props: SceneProps): RenderJob {
 
       const composition = await selectComposition({
         serveUrl,
-        id: 'Scene',
+        id: 'Launch',
         inputProps: props,
       })
 

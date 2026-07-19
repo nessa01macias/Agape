@@ -154,7 +154,7 @@ export function Pipeline() {
   return (
     <div
       className={`pipe is-${act}`}
-      style={{ '--accent': job.scene.accent } as React.CSSProperties}
+      style={{ '--accent': job.scene.theme.colors.accent } as React.CSSProperties}
       data-beat={beat ? 'true' : undefined}
     >
       <div className="pipe__bg" aria-hidden="true">

@@ -21,7 +21,7 @@ export type ExportState =
 
 export function useRender(
   job: Job | null,
-  props: { brandName: string; domain: string; accent: string },
+  props: { brandName: string; domain: string } & Record<string, unknown>,
 ) {
   const [state, setState] = useState<ExportState>({ phase: 'idle' })
   const timer = useRef<number | undefined>(undefined)

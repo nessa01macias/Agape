@@ -22,10 +22,12 @@ import { Player, type PlayerRef } from '@remotion/player'
 import { useJob } from '../hooks/useJob'
 import { useRender } from '../hooks/useRender'
 import type { Job } from '../lib/jobs'
-import { Scene, type SceneProps } from '../remotion/Scene'
+import { LaunchTemplate, type LaunchProps } from '../remotion/LaunchTemplate'
+import { PRESET_THEMES } from '../remotion/theme'
 import {
   DURATION_IN_FRAMES,
   FPS,
+  SHOTS,
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from '../remotion/constants'
@@ -60,21 +62,36 @@ const TRACKS: Track[] = [
     label: 'V3',
     sub: 'Lower third',
     kind: 'video',
-    clips: [{ id: 'domain-pill', name: 'domain.pill', from: 58, to: DURATION_IN_FRAMES, tone: 'soft' }],
+    clips: [
+      { id: 'domain-chip', name: 'domain.chip', from: 150, to: 222, tone: 'soft' },
+      { id: 'domain-pill', name: 'domain.pill', from: 312, to: DURATION_IN_FRAMES, tone: 'soft' },
+    ],
   },
   {
     id: 'v2',
     label: 'V2',
     sub: 'Titles',
     kind: 'video',
-    clips: [{ id: 'titles', name: 'titles', from: 15, to: DURATION_IN_FRAMES, tone: 'soft' }],
+    clips: [
+      { id: 'headline', name: 'headline', from: 0, to: 54, tone: 'soft' },
+      { id: 'introducing', name: 'introducing', from: 58, to: 120, tone: 'soft' },
+      { id: 'tagline', name: 'tagline', from: 238, to: 294, tone: 'soft' },
+      { id: 'lockup-titles', name: 'lockup', from: 302, to: DURATION_IN_FRAMES, tone: 'soft' },
+    ],
   },
   {
     id: 'v1',
     label: 'V1',
     sub: 'Video 1',
     kind: 'video',
-    clips: [{ id: 'phone', name: 'phone.scene', from: 0, to: DURATION_IN_FRAMES, tone: 'solid' }],
+    // Generated from SHOTS so the timeline can never drift from the template.
+    clips: SHOTS.map((shot) => ({
+      id: shot.id,
+      name: `shot.${shot.id}`,
+      from: shot.from,
+      to: shot.to,
+      tone: 'solid' as const,
+    })),
   },
   {
     id: 'a1',
@@ -89,7 +106,7 @@ const TRACKS: Track[] = [
     sub: 'Audio 2',
     kind: 'audio',
     muted: true,
-    clips: [{ id: 'vo', name: 'vo_take3.wav', from: 58, to: 170, tone: 'audio' }],
+    clips: [{ id: 'vo', name: 'vo_take3.wav', from: 234, to: 294, tone: 'audio' }],
   },
 ]
 
@@ -139,7 +156,7 @@ function RenderButton({
 }: {
   job: Job | null
   ready: boolean
-  scene: SceneProps
+  scene: LaunchProps
 }) {
   const { state, start } = useRender(job, scene)
 
@@ -185,7 +202,8 @@ function EditorView({ url }: { url: string }) {
   const job = useJob(url)
 
   // Inspector edits win over whatever the pipeline guessed.
-  const [overrides, setOverrides] = useState<Partial<SceneProps>>({})
+  const [overrides, setOverrides] = useState<Partial<LaunchProps>>({})
+  const [presetName, setPresetName] = useState('neonDark')
   const scene = useMemo(
     () => ({ ...job.scene, ...overrides }),
     [job.scene, overrides],
@@ -199,7 +217,7 @@ function EditorView({ url }: { url: string }) {
   const [leftTab, setLeftTab] = useState<'comps' | 'assets'>('comps')
   const [rightTab, setRightTab] = useState<'inspector' | 'renders'>('inspector')
   const [comp, setComp] = useState('main')
-  const [selectedClip, setSelectedClip] = useState<string | null>('phone')
+  const [selectedClip, setSelectedClip] = useState<string | null>('product')
   const [zoom, setZoom] = useState(1)
   const [shared, setShared] = useState(false)
 
@@ -290,11 +308,6 @@ function EditorView({ url }: { url: string }) {
         <div className="ed__crumb">
           untitled-project <span className="ed__crumb-sep">/</span>{' '}
           <strong>{comp}</strong>
-          {job.job?.source === 'mock' && (
-            <span className="ed__pill" title="Backend not answering — scripted stand-in.">
-              mock
-            </span>
-          )}
         </div>
         <div className="ed__menubar-actions">
           <button type="button" className="ed__btn" onClick={share}>
@@ -368,7 +381,7 @@ function EditorView({ url }: { url: string }) {
             <div className="ed__preview">
               <Player
                 ref={playerRef}
-                component={Scene}
+                component={LaunchTemplate}
                 inputProps={scene}
                 durationInFrames={DURATION_IN_FRAMES}
                 fps={FPS}
@@ -387,10 +400,10 @@ function EditorView({ url }: { url: string }) {
               <span>.{tcFrames}</span>
             </div>
             <button type="button" className="ed__tbtn" title="To start" onClick={() => seek(0)}>
-              ⏮
+              <i className="iconoir-skip-prev" />
             </button>
             <button type="button" className="ed__tbtn" title="Back one frame" onClick={() => seek(frame - 1)}>
-              ◂
+              <i className="iconoir-nav-arrow-left" />
             </button>
             <button
               type="button"
@@ -398,13 +411,13 @@ function EditorView({ url }: { url: string }) {
               title={playing ? 'Pause' : 'Play'}
               onClick={() => playerRef.current?.toggle()}
             >
-              {playing ? '❚❚' : '▶'}
+              <i className={playing ? 'iconoir-pause-solid' : 'iconoir-play-solid'} />
             </button>
             <button type="button" className="ed__tbtn" title="Forward one frame" onClick={() => seek(frame + 1)}>
-              ▸
+              <i className="iconoir-nav-arrow-right" />
             </button>
             <button type="button" className="ed__tbtn" title="To end" onClick={() => seek(DURATION_IN_FRAMES - 1)}>
-              ⏭
+              <i className="iconoir-skip-next" />
             </button>
             <span className="ed__tdiv" />
             <button
@@ -413,7 +426,7 @@ function EditorView({ url }: { url: string }) {
               title="Loop"
               onClick={() => setLoop((v) => !v)}
             >
-              ⟳
+              <i className="iconoir-repeat" />
             </button>
             <button
               type="button"
@@ -421,7 +434,7 @@ function EditorView({ url }: { url: string }) {
               title="Fullscreen"
               onClick={() => playerRef.current?.requestFullscreen()}
             >
-              ⛶
+              <i className="iconoir-expand" />
             </button>
           </div>
         </div>
@@ -494,15 +507,64 @@ function EditorView({ url }: { url: string }) {
                   onChange={(e) => setOverrides((o) => ({ ...o, domain: e.target.value }))}
                 />
               </label>
+
+              <h2 className="ed__insp-title ed__insp-title--gap">copy</h2>
+              <label className="ed__prop ed__prop--edit">
+                <span>Headline</span>
+                <input
+                  value={scene.headline}
+                  onChange={(e) => setOverrides((o) => ({ ...o, headline: e.target.value }))}
+                />
+              </label>
+              <label className="ed__prop ed__prop--edit">
+                <span>Tagline</span>
+                <input
+                  value={scene.tagline}
+                  onChange={(e) => setOverrides((o) => ({ ...o, tagline: e.target.value }))}
+                />
+              </label>
+              <label className="ed__prop ed__prop--edit">
+                <span>CTA</span>
+                <input
+                  value={scene.cta}
+                  onChange={(e) => setOverrides((o) => ({ ...o, cta: e.target.value }))}
+                />
+              </label>
+
+              <h2 className="ed__insp-title ed__insp-title--gap">theme</h2>
+              <label className="ed__prop ed__prop--edit">
+                <span>Preset</span>
+                <select
+                  value={presetName}
+                  onChange={(e) => {
+                    setPresetName(e.target.value)
+                    setOverrides((o) => ({ ...o, theme: PRESET_THEMES[e.target.value] }))
+                  }}
+                >
+                  {Object.keys(PRESET_THEMES).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="ed__prop ed__prop--edit">
                 <span>Accent</span>
                 <span className="ed__accent">
                   <input
                     type="color"
-                    value={scene.accent}
-                    onChange={(e) => setOverrides((o) => ({ ...o, accent: e.target.value }))}
+                    value={scene.theme.colors.accent}
+                    onChange={(e) =>
+                      setOverrides((o) => ({
+                        ...o,
+                        theme: {
+                          ...scene.theme,
+                          colors: { ...scene.theme.colors, accent: e.target.value },
+                        },
+                      }))
+                    }
                   />
-                  <span className="ed__prop-val">{scene.accent}</span>
+                  <span className="ed__prop-val">{scene.theme.colors.accent}</span>
                 </span>
               </label>
             </div>
@@ -663,9 +725,19 @@ function EditorView({ url }: { url: string }) {
                 </div>
               ))}
 
-              {/* playhead */}
+              {/* playhead — chip shifts near the edges so the scroll
+                  container's overflow clipping never swallows it */}
               <div className="ed__playhead" style={{ left: `${playFrac * 100}%` }}>
-                <span className="ed__playhead-chip">{tcLong(frame).slice(3)}</span>
+                <span
+                  className="ed__playhead-chip"
+                  style={{
+                    transform: `translateX(${
+                      playFrac < 0.04 ? '0%' : playFrac > 0.96 ? '-100%' : '-50%'
+                    })`,
+                  }}
+                >
+                  {tcLong(frame).slice(3)}
+                </span>
               </div>
             </div>
           </div>
