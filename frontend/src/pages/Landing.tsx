@@ -4,6 +4,7 @@ import { Close } from '../components/Close'
 import { Footer } from '../components/Footer'
 import { Hero } from '../components/Hero'
 import { Nav } from '../components/Nav'
+import { Pricing } from '../components/Pricing'
 import { Sequence } from '../components/Sequence'
 
 export function Landing() {
@@ -25,6 +26,7 @@ export function Landing() {
         <Hero onAnalyze={handleAnalyze} />
         <Sequence />
         <Bento />
+        <Pricing />
         <Close />
       </main>
       <Footer />

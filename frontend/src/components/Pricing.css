@@ -1,0 +1,120 @@
+.pricing {
+  position: relative;
+}
+
+.pricing__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pricing__title {
+  margin-top: 20px;
+  font-size: var(--t-display);
+  max-width: 14ch;
+}
+
+.pricing__card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  margin-top: clamp(38px, 5vw, 62px);
+  padding: 40px 34px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 50px 100px -50px rgba(0, 0, 0, 0.9);
+}
+
+.pricing__tag {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--teal-active);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pricing__amount {
+  margin-top: 22px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pricing__amount b {
+  font-size: clamp(52px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--text-hi);
+  line-height: 1;
+}
+
+.pricing__amount s {
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+.pricing__list {
+  list-style: none;
+  margin: 30px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+}
+
+.pricing__list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text);
+}
+
+/* A small teal check, matching the editor's active state. */
+.pricing__list i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--teal-active);
+  position: relative;
+}
+
+.pricing__list i::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 3.5px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.6px 1.6px 0;
+  transform: rotate(45deg);
+}
+
+.pricing__cta {
+  width: 100%;
+  margin-top: 32px;
+}
+
+.pricing__fine {
+  margin-top: 16px;
+  font-size: 12.5px;
+  font-weight: 300;
+  color: var(--text-dim);
+  max-width: 34ch;
+}
+
+@media (max-width: 560px) {
+  .pricing__card {
+    padding: 32px 24px 28px;
+  }
+}

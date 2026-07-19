@@ -26,6 +26,11 @@ export const sceneProps = z.object({
   brandName: z.string().min(1),
   domain: z.string().min(1),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'accent must be #rrggbb'),
+  // Optional so a caller can render a bare brand cut; the composition
+  // defaults these when they're absent.
+  eyebrow: z.string().optional(),
+  tagline: z.string().optional(),
+  footer: z.string().optional(),
 })
 
 export type SceneProps = z.infer<typeof sceneProps>

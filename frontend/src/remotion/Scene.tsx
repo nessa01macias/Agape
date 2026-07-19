@@ -9,11 +9,23 @@ export const sceneSchema = z.object({
   brandName: z.string(),
   domain: z.string(),
   accent: z.string(),
+  /* The three lines the planner writes. Defaulted so the composition
+     still renders standalone in Studio and from a bare `remotion render`. */
+  eyebrow: z.string().default("INTRODUCING"),
+  tagline: z.string().default("Something big is coming."),
+  footer: z.string().default("LAUNCHING SOON"),
 });
 
 export type SceneProps = z.infer<typeof sceneSchema>;
 
-export const Scene: React.FC<SceneProps> = ({ brandName, domain, accent }) => {
+export const Scene: React.FC<SceneProps> = ({
+  brandName,
+  domain,
+  accent,
+  eyebrow,
+  tagline,
+  footer,
+}) => {
   const { width, height } = useVideoConfig();
 
   return (
@@ -25,9 +37,15 @@ export const Scene: React.FC<SceneProps> = ({ brandName, domain, accent }) => {
       <ThreeCanvas linear width={width} height={height}>
         <ambientLight intensity={1.5} color={0xffffff} />
         <pointLight position={[10, 10, 0]} intensity={1.2} />
-        <Phone brandName={brandName} domain={domain} accent={accent} />
+        <Phone brandName={brandName} domain={domain} accent={accent} footer={footer} />
       </ThreeCanvas>
-      <Titles brandName={brandName} domain={domain} accent={accent} />
+      <Titles
+        brandName={brandName}
+        domain={domain}
+        accent={accent}
+        eyebrow={eyebrow}
+        tagline={tagline}
+      />
     </AbsoluteFill>
   );
 };

@@ -27,7 +27,9 @@ export const Titles: React.FC<{
   readonly brandName: string;
   readonly domain: string;
   readonly accent: string;
-}> = ({ brandName, domain, accent }) => {
+  readonly eyebrow: string;
+  readonly tagline: string;
+}> = ({ brandName, domain, accent, eyebrow, tagline }) => {
   return (
     <AbsoluteFill
       style={{
@@ -50,7 +52,7 @@ export const Titles: React.FC<{
               color: accent,
             }}
           >
-            INTRODUCING
+            {eyebrow}
           </div>
         </FadeUp>
       </Sequence>
@@ -72,7 +74,7 @@ export const Titles: React.FC<{
       <Sequence from={42} layout="none">
         <FadeUp>
           <div style={{ fontSize: 36, color: "#a0a0a8" }}>
-            Something big is coming.
+            {tagline}
           </div>
         </FadeUp>
       </Sequence>

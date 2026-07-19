@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { URL_INPUT_ID } from '../lib/focusUrl'
 import { usePointerLight } from '../hooks/usePointerLight'
 import { useTypewriter } from '../hooks/useTypewriter'
 import { Words } from './Words'
@@ -77,6 +78,7 @@ export function Hero({ onAnalyze }: HeroProps) {
 
             <span className="hero__entry">
               <input
+                id={URL_INPUT_ID}
                 type="text"
                 inputMode="url"
                 autoComplete="url"

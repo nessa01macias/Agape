@@ -18,8 +18,8 @@ function Card({ className = '', big, note, children }: CardProps) {
       <div className="bento__demo" aria-hidden="true">
         {children}
       </div>
-      <h3 className="bento__big">
-        <Words className="bloom">{big}</Words>
+      <h3 className="bento__big bloom">
+        <Words>{big}</Words>
       </h3>
       <p className="bento__note">{note}</p>
     </article>
@@ -30,8 +30,8 @@ export function Bento() {
   return (
     <section className="section bento" id="what">
       <div className="container">
-        <h2 className="bento__title">
-          <Words className="bloom">Everything it hands you.</Words>
+        <h2 className="bento__title bloom">
+          <Words>Everything it hands you.</Words>
         </h2>
 
         <div className="bento__grid">

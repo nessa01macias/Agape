@@ -72,8 +72,8 @@ export function Sequence() {
       <div className="seq__track" ref={ref}>
         <div className="seq__sticky">
           <header className="seq__head">
-            <h2 className="seq__title">
-              <Words className="bloom">You say it once.</Words>
+            <h2 className="seq__title bloom">
+              <Words>You say it once.</Words>
             </h2>
             <p className="seq__sub lede">Agape builds the whole timeline.</p>
           </header>

@@ -14,11 +14,19 @@ const BASE_SCALE = 1.1;
 const TEXTURE_WIDTH = 462;
 const TEXTURE_HEIGHT = Math.round(TEXTURE_WIDTH / SCREEN_ASPECT);
 
+/** "OUT NOW" -> "O U T   N O W" — the screen sets this line wide. */
+const spaced = (text: string) =>
+  text
+    .split(" ")
+    .map((word) => word.split("").join(" "))
+    .join("   ");
+
 const drawBrandScreen = (
   ctx: OffscreenCanvasRenderingContext2D,
   brandName: string,
   domain: string,
   accent: string,
+  footer: string,
 ) => {
   const w = TEXTURE_WIDTH;
   const h = TEXTURE_HEIGHT;
@@ -53,14 +61,15 @@ const drawBrandScreen = (
 
   ctx.fillStyle = "#8f8f9a";
   ctx.font = "22px 'Helvetica Neue', Arial, sans-serif";
-  ctx.fillText("L A U N C H I N G   S O O N", w / 2, h * 0.85);
+  ctx.fillText(spaced(footer), w / 2, h * 0.85);
 };
 
 export const Phone: React.FC<{
   readonly brandName: string;
   readonly domain: string;
   readonly accent: string;
-}> = ({ brandName, domain, accent }) => {
+  readonly footer: string;
+}> = ({ brandName, domain, accent, footer }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -91,7 +100,7 @@ export const Phone: React.FC<{
     if (!ctx) {
       throw new Error("Failed to get 2d context");
     }
-    drawBrandScreen(ctx, brandName, domain, accent);
+    drawBrandScreen(ctx, brandName, domain, accent, footer);
     const tex = new CanvasTexture(canvas);
     tex.repeat.x = 1 / layout.screen.width;
     tex.repeat.y = 1 / layout.screen.height;

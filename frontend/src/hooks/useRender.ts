@@ -19,10 +19,18 @@ export type ExportState =
   | { phase: 'done'; url: string }
   | { phase: 'error'; message: string }
 
-export function useRender(job: Job | null) {
+export function useRender(
+  job: Job | null,
+  props: { brandName: string; domain: string; accent: string },
+) {
   const [state, setState] = useState<ExportState>({ phase: 'idle' })
   const timer = useRef<number | undefined>(undefined)
   const live = useRef(true)
+
+  // Held in a ref so editing the brand in the inspector doesn't rebuild
+  // `start` on every keystroke — the render reads it once, on click.
+  const latest = useRef(props)
+  latest.current = props
 
   useEffect(() => {
     live.current = true
@@ -44,7 +52,7 @@ export function useRender(job: Job | null) {
     setState({ phase: 'starting' })
 
     try {
-      const id = await startRender(job)
+      const id = await startRender(job, latest.current)
 
       const poll = async () => {
         if (!live.current) return

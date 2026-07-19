@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { focusUrlInput } from '../lib/focusUrl'
 import { Logo } from './Logo'
 import './Nav.css'
 
+/** Only sections that actually exist on the page. */
 const LINKS = [
   { label: 'How it works', href: '#how' },
   { label: 'What you get', href: '#what' },
@@ -19,6 +21,12 @@ export function Nav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  function start(event: React.MouseEvent) {
+    event.preventDefault()
+    setOpen(false)
+    focusUrlInput()
+  }
+
   return (
     <header className={`nav ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="nav__inner container">
@@ -35,10 +43,7 @@ export function Nav() {
         </nav>
 
         <div className="nav__actions">
-          <a className="nav__signin" href="#signin">
-            Sign in
-          </a>
-          <a className="btn btn--primary" href="#start">
+          <a className="btn btn--primary" href="#top" onClick={start}>
             Start free
           </a>
         </div>
@@ -65,14 +70,7 @@ export function Nav() {
             {link.label}
           </a>
         ))}
-        <a href="#signin" onClick={() => setOpen(false)}>
-          Sign in
-        </a>
-        <a
-          className="btn btn--primary"
-          href="#start"
-          onClick={() => setOpen(false)}
-        >
+        <a className="btn btn--primary" href="#top" onClick={start}>
           Start free
         </a>
       </div>

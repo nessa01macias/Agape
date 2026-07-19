@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Landing } from './pages/Landing'
+import { Legal } from './pages/Legal'
 
 /*
  * Split from the landing bundle: these two pull in Remotion and three.js,
@@ -23,6 +24,8 @@ export default function App() {
           {/* ?url= — the pipeline reads it and starts the job on mount. */}
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/editor" element={<Editor />} />
+          <Route path="/privacy" element={<Legal kind="privacy" />} />
+          <Route path="/terms" element={<Legal kind="terms" />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

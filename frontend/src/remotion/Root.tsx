@@ -22,6 +22,9 @@ export const RemotionRoot: React.FC = () => {
         brandName: "acme",
         domain: "acme.com",
         accent: "#6C5CE7",
+        eyebrow: "INTRODUCING",
+        tagline: "Something big is coming.",
+        footer: "LAUNCHING SOON",
       }}
     />
   );

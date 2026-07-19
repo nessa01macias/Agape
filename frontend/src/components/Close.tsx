@@ -1,3 +1,4 @@
+import { focusUrlInput } from '../lib/focusUrl'
 import { Words } from './Words'
 import './Close.css'
 
@@ -8,15 +9,21 @@ export function Close() {
 
       <div className="container close__inner">
         <h2 className="close__title">
-          <Words className="bloom close__line">It ships Monday.</Words>
-          <Words className="bloom--teal close__line" delay={220}>
-            You have tonight.
-          </Words>
+          <span className="bloom close__line">
+            <Words>It ships Monday.</Words>
+          </span>
+          <span className="bloom--teal close__line">
+            <Words delay={220}>You have tonight.</Words>
+          </span>
         </h2>
 
-        <a className="btn btn--primary btn--lg close__cta" href="#top">
+        <button
+          type="button"
+          className="btn btn--primary btn--lg close__cta"
+          onClick={focusUrlInput}
+        >
           Paste your URL
-        </a>
+        </button>
       </div>
     </section>
   )

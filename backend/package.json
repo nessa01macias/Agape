@@ -10,6 +10,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^2.12.0",
     "@remotion/bundler": "4.0.494",
     "@remotion/renderer": "4.0.494",
     "cheerio": "^1.0.0",

@@ -13,9 +13,15 @@ import { brandFromUrl } from './brand'
 export type StageId = 'scout' | 'curator' | 'strategist' | 'writer' | 'director'
 
 export type Artifact = {
-  kind: 'color' | 'logo' | 'font' | 'copy'
+  kind: 'color' | 'logo' | 'font' | 'copy' | 'image'
+  /** Display text — safe to print. */
   value: string
   label: string
+  /**
+   * Where the asset actually lives, when `value` is only a name for it.
+   * Screenshot URLs are signed and expire, so don't persist one.
+   */
+  src?: string
 }
 
 export type Job = {
@@ -36,14 +42,81 @@ export type JobEvent =
   | { type: 'error'; message: string }
 
 export async function createProject(url: string): Promise<Job> {
-  // Small delay so the "starting" phase is visible instead of a flash.
-  await new Promise((resolve) => setTimeout(resolve, 220))
-  return { id: `mock-${Date.now().toString(36)}`, url, source: 'mock' }
+  try {
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+
+    if (!response.ok) throw new Error(`POST /api/projects — ${response.status}`)
+
+    const data: { job_id?: string } = await response.json()
+    if (!data.job_id) throw new Error('POST /api/projects — no job_id')
+
+    return { id: data.job_id, url, source: 'live' }
+  } catch (cause) {
+    console.info('[agape] backend not answering, using the stand-in —', cause)
+    // Small delay so the "starting" phase is visible instead of a flash.
+    await new Promise((resolve) => setTimeout(resolve, 220))
+    return { id: `mock-${Date.now().toString(36)}`, url, source: 'mock' }
+  }
 }
 
-export function setProjectFormat(_job: Job, _format: string): Promise<void> {
-  // Optimistic no-op until the backend exists.
-  return Promise.resolve()
+export function setProjectFormat(job: Job, format: string): Promise<void> {
+  if (job.source === 'mock') return Promise.resolve()
+
+  // Optimistic: the pipeline carries on with the inferred format either way.
+  return fetch(`/api/projects/${job.id}/format`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ format }),
+  }).then(
+    () => undefined,
+    () => undefined,
+  )
+}
+
+/**
+ * The real thing: server-sent events off the Node backend. The server
+ * replays everything the job has already emitted on connect, so opening
+ * the stream a moment after the POST loses nothing.
+ */
+function streamFromBackend(
+  job: Job,
+  onEvent: (event: JobEvent) => void,
+): () => void {
+  const stream = new EventSource(`/api/projects/${job.id}/events`)
+
+  /**
+   * The server closes the stream once it has sent `done`, and a closed
+   * EventSource fires `onerror` — so without this flag every *successful*
+   * job would end by reporting a connection failure.
+   */
+  let settled = false
+
+  stream.onmessage = (message) => {
+    try {
+      const event = JSON.parse(message.data) as JobEvent
+
+      if (event.type === 'done' || event.type === 'error') {
+        settled = true
+        stream.close()
+      }
+
+      onEvent(event)
+    } catch {
+      console.warn('[agape] unparseable job event', message.data)
+    }
+  }
+
+  stream.onerror = () => {
+    if (settled) return
+    stream.close()
+    onEvent({ type: 'error', message: 'Lost the connection to the pipeline.' })
+  }
+
+  return () => stream.close()
 }
 
 /** [delay-ms-after-previous, event] */
@@ -99,6 +172,8 @@ export function subscribeToJob(
   job: Job,
   onEvent: (event: JobEvent) => void,
 ): () => void {
+  if (job.source === 'live') return streamFromBackend(job, onEvent)
+
   let cancelled = false
   let timer: ReturnType<typeof setTimeout> | undefined
 

@@ -20,6 +20,8 @@ import {
 import { Link, useSearchParams } from 'react-router-dom'
 import { Player, type PlayerRef } from '@remotion/player'
 import { useJob } from '../hooks/useJob'
+import { useRender } from '../hooks/useRender'
+import type { Job } from '../lib/jobs'
 import { Scene, type SceneProps } from '../remotion/Scene'
 import {
   DURATION_IN_FRAMES,
@@ -123,6 +125,60 @@ const clipDur = (clip: Clip) => tcLong(clip.to - clip.from).slice(3)
 export function Editor() {
   const [params] = useSearchParams()
   return <EditorView url={params.get('url') ?? DEFAULT_URL} />
+}
+
+/**
+ * Renders the cut to an MP4 on the backend. Only meaningful once the
+ * pipeline has finished — before that there's no project to render — and
+ * never against a mock job, which has no backend behind it.
+ */
+function RenderButton({
+  job,
+  ready,
+  scene,
+}: {
+  job: Job | null
+  ready: boolean
+  scene: SceneProps
+}) {
+  const { state, start } = useRender(job, scene)
+
+  if (state.phase === 'done') {
+    return (
+      <a className="ed__btn ed__btn--primary" href={state.url} download>
+        Download
+      </a>
+    )
+  }
+
+  const mock = job?.source === 'mock'
+  const busy = state.phase === 'starting' || state.phase === 'rendering'
+
+  return (
+    <button
+      type="button"
+      className="ed__btn ed__btn--primary"
+      disabled={busy || mock || !ready}
+      onClick={() => void start()}
+      title={
+        mock
+          ? "Backend isn't answering — start it to render."
+          : !ready
+            ? 'Still cutting — render once the pipeline finishes.'
+            : state.phase === 'error'
+              ? state.message
+              : 'Render this cut to an MP4'
+      }
+    >
+      {state.phase === 'error'
+        ? 'Retry'
+        : state.phase === 'starting'
+          ? 'Starting…'
+          : state.phase === 'rendering'
+            ? `${Math.round(state.progress * 100)}%`
+            : 'Render'}
+    </button>
+  )
 }
 
 function EditorView({ url }: { url: string }) {
@@ -244,14 +300,7 @@ function EditorView({ url }: { url: string }) {
           <button type="button" className="ed__btn" onClick={share}>
             {shared ? 'Copied' : 'Share'}
           </button>
-          <button
-            type="button"
-            className="ed__btn ed__btn--primary"
-            disabled
-            title="Rendering needs the Node render service — not wired up yet."
-          >
-            Render
-          </button>
+          <RenderButton job={job.job} ready={job.ready} scene={scene} />
         </div>
       </header>
 

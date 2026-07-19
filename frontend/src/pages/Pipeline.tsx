@@ -99,6 +99,29 @@ export function Pipeline() {
   const act: 'read' | 'build' | 'done' =
     phase === 'done' ? 'done' : decision && !beat ? 'build' : 'read'
 
+  /**
+   * The first rendered page shot the curator sends back. Only screenshots
+   * carry `src`; the hero-image artifact is a filename with nothing behind
+   * it, so that field is what separates them.
+   */
+  const shot = useMemo(
+    () => artifacts.find((a) => a.kind === 'image' && a.src)?.src ?? null,
+    [artifacts],
+  )
+
+  /**
+   * Their own imagery, in arrival order. The first entry is the rendered
+   * page shot standing in for the site itself, so the reel and the
+   * storyboard take everything after it — otherwise the first frame of
+   * the film is a screenshot of a webpage.
+   */
+  const footage = useMemo(() => {
+    const all = artifacts
+      .filter((a) => a.kind === 'image' && a.src)
+      .map((a) => a.src as string)
+    return all.slice(1)
+  }, [artifacts])
+
   const clips = useMemo(() => {
     if (!frames.length) return []
     return frames.map((frame, i) => ({
@@ -182,32 +205,49 @@ export function Pipeline() {
           </div>
 
           <div className="pipe__stage">
-            {/* ACT I — their site, read. Falls away on the turn. */}
-            <div
-              className={`site ${act === 'read' ? '' : 'is-falling'}`}
-              aria-hidden="true"
-            >
-              <span className="site__block site__block--bar" />
-              <span className="site__block site__block--hero" />
-              <span className="site__row">
-                <i className="site__block" />
-                <i className="site__block" />
-                <i className="site__block" />
-              </span>
-              <span className="site__block site__block--wide" />
-              <span className="site__block site__block--foot" />
-              <span className="site__scan" />
-            </div>
-
             {/* Everything the agents make lands here, centred, so the
                 stage never shows a hole between the site falling away
                 and the first frame arriving. */}
             <div className="pipe__canvas">
-              {/* ACT III — the shots, drawn as they're storyboarded. */}
+            {/* ACT I — their site, read. The wireframe is a placeholder for
+                  the seconds before the scraper answers; the moment a real
+                  rendered shot arrives it takes over, and the blocks stay on
+                  as an overlay of what we detected. Then the whole thing
+                  collapses into clips. */}
+              <div
+                className={[
+                  'site',
+                  act === 'read' ? '' : 'is-falling',
+                  shot ? 'has-shot' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-hidden="true"
+              >
+                {shot && <img className="site__shot" src={shot} alt="" />}
+                <span className="site__block site__block--bar" />
+                <span className="site__block site__block--hero" />
+                <span className="site__row">
+                  <i className="site__block" />
+                  <i className="site__block" />
+                  <i className="site__block" />
+                </span>
+                <span className="site__block site__block--wide" />
+                <span className="site__block site__block--foot" />
+                <span className="site__scan" />
+              </div>
+
+              {/* ACT III — the shots, drawn as they're storyboarded. Each
+                  one gets a real picture off their site, so the storyboard
+                  previews footage we actually have rather than a mock. */}
               <div className="board" aria-live="polite">
-                {frames.map((frame) => (
+                {frames.map((frame, i) => (
                   <figure className="board__shot" key={frame.index}>
-                    <span className="board__thumb" />
+                    <span className="board__thumb">
+                      {footage[i % Math.max(footage.length, 1)] && (
+                        <img src={footage[i % footage.length]} alt="" />
+                      )}
+                    </span>
                     <figcaption>{frame.title}</figcaption>
                   </figure>
                 ))}
@@ -255,21 +295,49 @@ export function Pipeline() {
               </div>
             )}
 
+            {/* The haul. Every picture the curator lifts off the page lands
+                here, so the wait is spent watching their own material pile
+                up — and on the turn these are what the clips are made of. */}
+            {footage.length > 0 && (
+              <div className={`reel ${act === 'read' ? '' : 'is-loaded'}`}>
+                {footage.map((src, i) => (
+                  <span
+                    className="reel__cell"
+                    key={src}
+                    style={{ '--i': i } as React.CSSProperties}
+                  >
+                    <img src={src} alt="" loading="lazy" />
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* The timeline, filling the whole way through. */}
             <div className={`timeline pipe__timeline ${act === 'done' ? 'is-playing' : ''}`}>
               <div className="timeline__clips">
                 {clips.length === 0 ? (
                   <span className="pipe__empty">timeline empty</span>
                 ) : (
-                  clips.map((clip) => (
-                    <span
-                      key={clip.key}
-                      className={`clip clip--${clip.tone}`}
-                      style={{ flexGrow: clip.grow }}
-                    >
-                      {clip.title}
-                    </span>
-                  ))
+                  clips.map((clip, i) => {
+                    const still = footage[i % Math.max(footage.length, 1)]
+                    return (
+                      <span
+                        key={clip.key}
+                        // A clip carrying its own still reads as footage;
+                        // the flat colour is the fallback when the site
+                        // gave us nothing to put in it.
+                        className={`clip clip--${clip.tone} ${still ? 'has-still' : ''}`}
+                        style={{
+                          flexGrow: clip.grow,
+                          ...(still
+                            ? ({ '--still': `url(${still})` } as React.CSSProperties)
+                            : {}),
+                        }}
+                      >
+                        {clip.title}
+                      </span>
+                    )
+                  })
                 )}
               </div>
 
@@ -386,6 +454,17 @@ function Chip({ artifact }: { artifact: Artifact }) {
         <i style={{ background: artifact.value }} />
         {artifact.value}
       </span>
+    )
+  }
+
+  // A rendered page shot. Printing its name would waste the most
+  // persuasive artifact we have — it's a picture of their own site.
+  if (artifact.kind === 'image' && artifact.src) {
+    return (
+      <figure className="chip chip--shot">
+        <img src={artifact.src} alt={artifact.label} loading="lazy" />
+        <figcaption>{artifact.label}</figcaption>
+      </figure>
     )
   }
 

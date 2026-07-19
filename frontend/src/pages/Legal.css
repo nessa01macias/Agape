@@ -1,0 +1,37 @@
+.legal {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(180deg, #090909 0%, #0c1a1d 60%, #14282c 130%);
+}
+
+.legal__inner {
+  max-width: 660px;
+  padding-block: 96px;
+}
+
+.legal__brand {
+  display: inline-flex;
+  margin-bottom: 52px;
+}
+
+.legal__title {
+  font-size: clamp(44px, 7vw, 84px);
+}
+
+.legal__lede {
+  margin-top: 18px;
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.legal__body {
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text-mid);
+}
+
+.legal__back {
+  margin-top: 44px;
+}

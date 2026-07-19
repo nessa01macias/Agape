@@ -84,6 +84,34 @@ app.patch('/api/projects/:id/format', (req, res) => {
 })
 
 /**
+ * The plan the model produced — format, script, and shot list. This is
+ * what the editor builds its timeline from, so it's readable on its own
+ * rather than only reachable by replaying the event stream.
+ */
+app.get('/api/projects/:id/plan', (req, res) => {
+  const job = getJob(req.params.id)
+  if (!job) {
+    res.status(404).json({ error: 'No such project' })
+    return
+  }
+  if (!job.plan) {
+    res.status(409).json({ error: 'Still planning', status: 'pending' })
+    return
+  }
+
+  res.json({
+    project_id: job.id,
+    scene: job.scene,
+    format: job.format ?? job.plan.format,
+    reason: job.plan.reason,
+    script: job.plan.script,
+    shots: job.plan.shots,
+    /** False means the model was unavailable and this is the scripted cut. */
+    from_model: job.plan.fromModel,
+  })
+})
+
+/**
  * Renders the cut for a finished project. Props come from the job the
  * pipeline already built, so the MP4 matches what the editor previewed.
  * An explicit body overrides them — that's the editor's escape hatch.
@@ -95,8 +123,11 @@ app.post('/api/projects/:id/render', (req, res) => {
     return
   }
 
+  // Fall back to what the planner wrote, so a bare POST renders the
+  // cut the user just watched being planned.
+  const planned = job.scene && { ...job.scene, ...(job.plan?.titles ?? {}) }
   const parsed = sceneProps.safeParse(
-    Object.keys(req.body ?? {}).length ? req.body : job.scene,
+    Object.keys(req.body ?? {}).length ? req.body : planned,
   )
   if (!parsed.success) {
     res.status(409).json({

@@ -8,13 +8,21 @@
    --------------------------------------------------------------- */
 
 import { scrape, ScrapeError, type Scraped } from './scrape.ts'
+import { fallbackPlan, planVideo, type VideoPlan } from './plan.ts'
 
 export type StageId = 'scout' | 'curator' | 'strategist' | 'writer' | 'director'
 
 export type Artifact = {
   kind: 'color' | 'font' | 'logo' | 'copy' | 'image'
+  /** Display text. The UI prints this, so keep it short. */
   value: string
   label: string
+  /**
+   * Where the asset actually lives, when `value` is only a name for it.
+   * Firecrawl's screenshot URLs are signed and expire — download before
+   * persisting anything that points at one.
+   */
+  src?: string
 }
 
 export type JobEvent =
@@ -39,6 +47,8 @@ export type Job = {
   format: string | null
   /** Populated once the curator has read the site — feeds the renderer. */
   scene: { brandName: string; domain: string; accent: string } | null
+  /** What the model decided to cut. Null until the strategist runs. */
+  plan: VideoPlan | null
 }
 
 const jobs = new Map<string, Job>()
@@ -76,6 +86,7 @@ export function createJob(id: string, url: string): Job {
     finished: false,
     format: null,
     scene: null,
+    plan: null,
   }
 
   jobs.set(id, job)
@@ -86,10 +97,10 @@ export function createJob(id: string, url: string): Job {
 async function run(job: Job): Promise<void> {
   try {
     const site = await scout(job)
-    curate(job, site)
+    await curate(job, site)
     await strategise(job, site)
     await write(job, site)
-    await direct(job)
+    await direct(job, site)
 
     emit(job, { type: 'progress', value: 1 })
     emit(job, { type: 'done', projectId: job.id })
@@ -107,13 +118,36 @@ async function run(job: Job): Promise<void> {
   }
 }
 
+/**
+ * How many rendered shots to capture per job. Each costs a Firecrawl
+ * credit, so it's tunable — and the whole deep pass is skipped when
+ * there's no key, which downgrades to metadata rather than failing.
+ */
+const SHOTS = Number(process.env.AGAPE_SCREENSHOTS ?? 2)
+
+/** How many of the page's own images to hand the UI to animate with. */
+const FOOTAGE = 6
+
 async function scout(job: Job): Promise<Scraped> {
   emit(job, { type: 'stage', stage: 'scout', status: 'working', label: 'Reading the site' })
   emit(job, { type: 'log', message: `GET ${job.url}` })
 
-  const site = await scrape(job.url)
+  const deep = Boolean(process.env.FIRECRAWL_API_KEY)
+  const site = await scrape(job.url, {
+    full: deep,
+    screenshots: deep ? SHOTS : 0,
+  })
 
   emit(job, { type: 'log', message: `Read ${site.domain}` })
+  if (site.fonts.length) {
+    emit(job, { type: 'log', message: `Set in ${site.fonts.join(', ')}` })
+  }
+  if (site.images.length) {
+    emit(job, {
+      type: 'log',
+      message: `${site.images.length} images, ${site.textBlocks.length} blocks of copy`,
+    })
+  }
   if (site.description) {
     emit(job, { type: 'log', message: `“${site.description.slice(0, 70)}…”` })
   }
@@ -123,33 +157,90 @@ async function scout(job: Job): Promise<Scraped> {
   return site
 }
 
-function curate(job: Job, site: Scraped): void {
+async function curate(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'curator', status: 'working', label: 'Pulling brand' })
 
   job.scene = { brandName: site.name, domain: site.domain, accent: site.accent }
 
+  /*
+   * Paced, not instant. The scrape finishes in one tick, so without this
+   * every artifact lands in the same millisecond and the tray pops fully
+   * formed — which reads as a canned animation rather than work landing.
+   */
+  const beat = () => pause(260)
+
+  /*
+   * Shots first. This is the moment the screen stops looking like a
+   * loading animation and starts looking like *their* site — holding it
+   * back behind five brand chips left it on screen for under a second
+   * before the turn swept it away.
+   */
+  for (const [i, shot] of site.screenshots.entries()) {
+    await beat()
+    emit(job, {
+      type: 'artifact',
+      artifact: {
+        kind: 'image',
+        // The signed URL is 700-odd characters; the UI prints `value`, so
+        // give it a name and keep the URL in `src`.
+        value: i === 0 ? 'landing.png' : `page-${i + 1}.png`,
+        label: i === 0 ? 'Landing page' : `Page ${i + 1}`,
+        src: shot,
+      },
+    })
+  }
+
+  await beat()
   emit(job, {
     type: 'artifact',
     artifact: { kind: 'color', value: site.accent, label: 'Primary' },
   })
+  await beat()
   emit(job, {
     type: 'artifact',
     artifact: { kind: 'logo', value: site.name.charAt(0).toUpperCase(), label: `${site.name} mark` },
   })
 
   for (const font of site.fonts) {
+    await beat()
     emit(job, { type: 'artifact', artifact: { kind: 'font', value: font, label: 'Type' } })
   }
   if (site.tagline) {
+    await beat()
     emit(job, {
       type: 'artifact',
       artifact: { kind: 'copy', value: site.tagline.slice(0, 60), label: 'Tagline' },
     })
   }
   if (site.image) {
+    await beat()
     emit(job, {
       type: 'artifact',
-      artifact: { kind: 'image', value: site.image.split('/').pop() ?? 'hero', label: 'Hero shot' },
+      artifact: {
+        kind: 'image',
+        value: site.image.split('/').pop() ?? 'hero',
+        label: 'Hero shot',
+        src: site.image,
+      },
+    })
+  }
+
+  /*
+   * The rest of the page's imagery. These are what the loading screen
+   * animates with and what the cut is built from, so they go over the
+   * wire as real URLs rather than names.
+   */
+  const footage = site.images.filter((src) => src !== site.image).slice(0, FOOTAGE)
+  for (const [i, src] of footage.entries()) {
+    await beat()
+    emit(job, {
+      type: 'artifact',
+      artifact: {
+        kind: 'image',
+        value: src.split('/').pop()?.split('?')[0] || `image-${i + 1}`,
+        label: `Image ${i + 1}`,
+        src,
+      },
     })
   }
 
@@ -157,22 +248,29 @@ function curate(job: Job, site: Scraped): void {
   emit(job, { type: 'stage', stage: 'curator', status: 'done', label: 'Brand pulled' })
 }
 
+/**
+ * One model call covers strategist, writer and director — it sees the
+ * page shots once and decides format, script and shot list together,
+ * which keeps them consistent with each other. The stages below just
+ * narrate the parts of that plan as they become relevant.
+ */
 async function strategise(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'strategist', status: 'working', label: 'Choosing a format' })
   emit(job, { type: 'log', message: 'Weighing: launch teaser · demo walkthrough · ad cut' })
-  await pause(600)
 
-  const format = job.format ?? 'Launch teaser — 7s, 16:9'
+  const plan = await planVideo(site, (message) => emit(job, { type: 'log', message }))
+  job.plan = plan
+
+  // The model reads the accent off the rendered page; the scraper only
+  // counts hex codes in markup, which misses CSS-in-JS and image-heavy
+  // brands. Prefer the model's when it gave us one.
+  if (job.scene && plan.fromModel) job.scene.accent = plan.accent
+
+  // An override from the UI wins — the user picked it deliberately.
+  const format = job.format ?? plan.format
   job.format = format
 
-  emit(job, {
-    type: 'decision',
-    format,
-    reason: site.description
-      ? `The site leads with "${site.description.slice(0, 48)}…" — one clear promise, so a short teaser lands harder than a walkthrough.`
-      : 'The site leads with a product shot and a single call to action, so a short teaser lands harder than a walkthrough.',
-  })
-
+  emit(job, { type: 'decision', format, reason: plan.reason })
   emit(job, { type: 'progress', value: 0.58 })
   emit(job, { type: 'stage', stage: 'strategist', status: 'done', label: 'Format chosen' })
 }
@@ -180,14 +278,9 @@ async function strategise(job: Job, site: Scraped): Promise<void> {
 async function write(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'writer', status: 'working', label: 'Writing the script' })
 
-  const title = site.name.charAt(0).toUpperCase() + site.name.slice(1)
-  const lines = [
-    `Meet ${title}.`,
-    site.description?.split(/[.!?]/)[0]?.trim() || 'Something big is coming.',
-    site.domain,
-  ]
+  const plan = job.plan ?? fallbackPlan(site)
 
-  for (const line of lines) {
+  for (const line of plan.script) {
     await pause(400)
     emit(job, { type: 'script', line })
   }
@@ -196,19 +289,14 @@ async function write(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'writer', status: 'done', label: 'Script written' })
 }
 
-async function direct(job: Job): Promise<void> {
+async function direct(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'director', status: 'working', label: 'Storyboarding' })
 
-  // These are the beats the Remotion composition actually renders.
-  const frames = [
-    'Phone rises out of the dark',
-    'Brand screen resolves',
-    'Title card + domain',
-  ]
+  const plan = job.plan ?? fallbackPlan(site)
 
-  for (const [index, title] of frames.entries()) {
+  for (const [index, shot] of plan.shots.entries()) {
     await pause(350)
-    emit(job, { type: 'frame', index, title })
+    emit(job, { type: 'frame', index, title: shot.title })
   }
 
   emit(job, { type: 'progress', value: 0.94 })

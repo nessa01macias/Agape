@@ -5,8 +5,20 @@
 .footer__inner {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 40px;
   padding-block: 30px;
+}
+
+.footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer__copy {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-dim);
 }
 
 .footer__links {
@@ -14,10 +26,11 @@
   gap: 26px;
   margin-inline: auto;
   font-size: 14px;
+  font-weight: 300;
 }
 
 .footer__links a {
-  color: var(--text-dim);
+  color: var(--link);
   transition: color 0.25s ease;
 }
 
@@ -25,15 +38,62 @@
   color: var(--text-hi);
 }
 
-.footer__copy {
+/* team ---------------------------------------------------------- */
+
+.footer__team {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer__team-label {
   font-size: 13px;
+  font-weight: 300;
   color: var(--text-dim);
 }
 
-@media (max-width: 700px) {
+.footer__team ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.footer__team a {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s var(--ease-out);
+}
+
+.footer__team a:hover {
+  background: var(--teal-active);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-2px);
+}
+
+.footer__team svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--text-mid);
+}
+
+.footer__team a:hover svg {
+  fill: #fff;
+}
+
+@media (max-width: 900px) {
   .footer__inner {
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
     text-align: center;
   }
 

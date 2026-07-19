@@ -195,12 +195,20 @@ export function useJob(url: string): UseJob {
     // First colour the curator finds wins; the rest are supporting shades.
     const accent = state.artifacts.find((a) => a.kind === 'color')?.value
 
+    // The writer streams its three lines in render order — eyebrow,
+    // tagline, footer. They land one at a time, so the preview fills in
+    // as they arrive rather than waiting for the whole plan.
+    const [eyebrow, tagline, footer] = state.script
+
     return {
       brandName: guess.name,
       domain: guess.domain,
       accent: accent ?? guess.accent,
+      eyebrow: eyebrow ?? 'INTRODUCING',
+      tagline: tagline ?? 'Something big is coming.',
+      footer: footer ?? 'LAUNCHING SOON',
     }
-  }, [url, state.artifacts])
+  }, [url, state.artifacts, state.script])
 
   return { ...state, scene, ready: state.phase === 'done' }
 }
