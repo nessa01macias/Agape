@@ -7,11 +7,12 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.139.2",
     "uvicorn[standard]>=0.51.0",
+    "httpx>=0.28.1",
+    "beautifulsoup4>=4.13",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=8.3",
     "ruff>=0.8",
 ]
