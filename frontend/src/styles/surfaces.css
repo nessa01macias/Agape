@@ -1,0 +1,320 @@
+/* ---------------------------------------------------------------
+   Agape — shared surfaces
+   ---------------------------------------------------------------
+   The app-chrome vocabulary: a window, a timeline, a checklist, a
+   video frame. Lifted out of Showcase.css once the pipeline screen
+   needed the same parts — the landing page demos these, the pipeline
+   screen builds one for real.
+
+   Consumers own the motion. Nothing here animates on its own except
+   the badge dot, so a static mock and a live run can share the markup.
+   --------------------------------------------------------------- */
+
+/* the app window ------------------------------------------------ */
+
+.window {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.95);
+  overflow: hidden;
+}
+
+.window__bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.window__dots {
+  display: flex;
+  gap: 7px;
+}
+
+.window__dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.window__file {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.window__badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(169, 255, 103, 0.12);
+  color: var(--lime);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.window__badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+/* A finished run stops advertising itself as live. */
+.window__badge.is-idle {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-dim);
+}
+
+.window__badge.is-idle::before {
+  animation: none;
+}
+
+.window__body {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+}
+
+/* checklist ----------------------------------------------------- */
+
+.plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan__item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 11px;
+  align-items: start;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.plan__tick {
+  margin-top: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  position: relative;
+}
+
+.plan__item.is-done {
+  color: var(--text);
+}
+
+.plan__item.is-done .plan__tick {
+  background: var(--lime);
+  border-color: var(--lime);
+}
+
+.plan__item.is-done .plan__tick::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2.5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--ink);
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+}
+
+.plan__item.is-active {
+  color: var(--text-hi);
+}
+
+.plan__item.is-active .plan__tick {
+  border-color: var(--lime);
+  border-right-color: transparent;
+  animation: plan-spin 0.9s linear infinite;
+}
+
+@keyframes plan-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* video frame --------------------------------------------------- */
+
+.preview__frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+}
+
+.preview__poster {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 60% 70% at 30% 25%,
+      rgba(169, 255, 103, 0.28),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 60% at 78% 70%,
+      rgba(244, 219, 94, 0.22),
+      transparent 62%
+    ),
+    linear-gradient(150deg, var(--teal), #0d1618 70%);
+}
+
+.preview__play {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(9, 9, 9, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.preview__play::after {
+  content: '';
+  position: absolute;
+  left: 52%;
+  top: 50%;
+  translate: -50% -50%;
+  border-style: solid;
+  border-width: 8px 0 8px 13px;
+  border-color: transparent transparent transparent var(--white);
+}
+
+.preview__caption {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: rgba(9, 9, 9, 0.68);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.preview__caption b {
+  color: var(--lime);
+  font-weight: 600;
+}
+
+.preview__ratio {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(9, 9, 9, 0.6);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* timeline ------------------------------------------------------ */
+
+.timeline {
+  position: relative;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.timeline__clips {
+  display: flex;
+  gap: 4px;
+  height: 34px;
+}
+
+.clip {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  color: rgba(9, 9, 9, 0.72);
+  font-weight: 500;
+}
+
+.clip--lime {
+  background: var(--lime);
+}
+
+.clip--yellow {
+  background: var(--yellow);
+}
+
+.clip--teal {
+  background: #3b6b72;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.clip--dim {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.timeline__wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 34px;
+}
+
+.timeline__wave i {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Parked at 8% until a consumer animates it. */
+.timeline__head {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8%;
+  width: 2px;
+  background: var(--white);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+/* shared keyframes ---------------------------------------------- */
+
+/* An expanding ring — the live dot in the nav badge and the hero. */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(169, 255, 103, 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px rgba(169, 255, 103, 0);
+  }
+}
