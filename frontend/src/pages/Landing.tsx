@@ -1,16 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { CallToAction } from '../components/CallToAction'
-import { Features } from '../components/Features'
+import { Bento } from '../components/Bento'
+import { Close } from '../components/Close'
 import { Footer } from '../components/Footer'
 import { Hero } from '../components/Hero'
-import { HowItWorks } from '../components/HowItWorks'
-import { Marquee } from '../components/Marquee'
 import { Nav } from '../components/Nav'
-import { Showcase } from '../components/Showcase'
-import { useReveal } from '../hooks/useReveal'
+import { Sequence } from '../components/Sequence'
 
 export function Landing() {
-  useReveal()
   const navigate = useNavigate()
 
   /**
@@ -27,11 +23,9 @@ export function Landing() {
       <Nav />
       <main>
         <Hero onAnalyze={handleAnalyze} />
-        <Marquee />
-        <HowItWorks />
-        <Showcase />
-        <Features />
-        <CallToAction />
+        <Sequence />
+        <Bento />
+        <Close />
       </main>
       <Footer />
     </>

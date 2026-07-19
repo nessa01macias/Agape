@@ -3,9 +3,8 @@ import { Logo } from './Logo'
 import './Nav.css'
 
 const LINKS = [
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'The editor', href: '#editor' },
-  { label: 'Features', href: '#features' },
+  { label: 'How it works', href: '#how' },
+  { label: 'What you get', href: '#what' },
   { label: 'Pricing', href: '#pricing' },
 ]
 

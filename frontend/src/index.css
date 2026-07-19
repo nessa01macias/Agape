@@ -12,29 +12,50 @@
   --ink: #090909;
   --white: #ffffff;
 
-  /* surfaces — ink lifted with a hint of the teal */
+  /* surfaces — the editor's panel vocabulary, verbatim */
   --bg: var(--ink);
+  --bg-wash: linear-gradient(180deg, #090909 0%, #0c1a1d 45%, #25454a 130%);
+  --panel: rgba(255, 255, 255, 0.04);
+  --panel-2: rgba(255, 255, 255, 0.07);
   --surface: #0f1214;
   --surface-2: #141a1c;
-  --border: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --panel-radius: 20px;
+
+  /* teal is the active state; clips live in these two */
+  --teal-active: #25454a;
+  --clip: #2c525a;
+  --clip-soft: rgba(59, 98, 105, 0.45);
 
   /* text */
-  --text: rgba(255, 255, 255, 0.66);
-  --text-dim: rgba(255, 255, 255, 0.42);
+  --text: rgba(255, 255, 255, 0.85);
+  --text-mid: rgba(255, 255, 255, 0.55);
+  --text-dim: rgba(255, 255, 255, 0.4);
   --text-hi: var(--white);
+  --link: #9fbec3;
 
   /* glows */
   --glow-teal: rgba(37, 69, 74, 0.85);
   --glow-lime: rgba(169, 255, 103, 0.16);
 
   /* type */
-  --sans:
-    'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
+  /* display scale — the page speaks in headlines, not paragraphs */
+  --t-hero: clamp(46px, 8.2vw, 128px);
+  --t-display: clamp(40px, 6.6vw, 104px);
+  --t-title: clamp(28px, 3.4vw, 46px);
+  --t-body: clamp(15px, 1.15vw, 17px);
+  --t-micro: 13px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+
   /* layout */
-  --page: 1200px;
+  --page: 1240px;
   --gutter: 24px;
   --radius: 18px;
   --radius-lg: 28px;
@@ -66,6 +87,18 @@ body {
   overflow-x: hidden;
 }
 
+/* A single film-grain plate over the whole page. Kills banding in the
+   big blurred gradients and stops the black reading as flat. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 #root {
   isolation: isolate;
 }
@@ -75,8 +108,8 @@ h2,
 h3 {
   color: var(--text-hi);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
   margin: 0;
   text-wrap: balance;
 }
@@ -109,7 +142,7 @@ input {
 }
 
 /* ---------------------------------------------------------------
-   Shared primitives
+   Layout primitives
    --------------------------------------------------------------- */
 
 .container {
@@ -121,126 +154,175 @@ input {
 
 .section {
   position: relative;
-  padding-block: clamp(72px, 10vw, 132px);
+  padding-block: clamp(96px, 13vw, 190px);
 }
 
-.eyebrow {
+/* ---------------------------------------------------------------
+   Big type — white-hot core fading to grey, with a soft bloom.
+   This is the page's main voice; body copy is deliberately rare.
+   --------------------------------------------------------------- */
+
+.bloom {
+  background: linear-gradient(
+    180deg,
+    #ffffff 22%,
+    rgba(255, 255, 255, 0.72) 78%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.16))
+    drop-shadow(0 0 70px rgba(169, 255, 103, 0.09));
+}
+
+/* The teal-lit variant — cool, not neon. Lime only warms the tail. */
+.bloom--teal {
+  background: linear-gradient(150deg, #ffffff 8%, #b9d9dd 52%, var(--link) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 34px rgba(159, 190, 195, 0.22));
+}
+
+.lede {
+  font-size: var(--t-body);
+  font-weight: 300;
+  color: var(--text-mid);
+  max-width: 42ch;
+}
+
+/* A pill, like the editor's menu items. */
+.kicker {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lime);
-  margin-bottom: 20px;
-}
-
-.eyebrow::before {
-  content: '';
-  width: 18px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.6;
-}
-
-.section-title {
-  font-size: clamp(32px, 4.4vw, 52px);
-  max-width: 18ch;
-}
-
-.section-lede {
-  margin-top: 18px;
-  max-width: 56ch;
-  font-size: clamp(16px, 1.4vw, 19px);
-}
-
-/* buttons ------------------------------------------------------- */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid transparent;
+  gap: 9px;
+  padding: 6px 16px;
   border-radius: 999px;
-  padding: 12px 22px;
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn:active {
-  transform: translateY(0);
-}
-
-.btn--primary {
-  background: var(--lime);
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: 0 6px 24px -8px rgba(169, 255, 103, 0.55);
-}
-
-.btn--primary:hover {
-  background: #b9ff85;
-  box-shadow: 0 10px 32px -8px rgba(169, 255, 103, 0.7);
-}
-
-.btn--ghost {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: var(--border);
-  color: var(--text-hi);
-}
-
-.btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--border-strong);
-}
-
-.btn--lg {
-  padding: 16px 30px;
-  font-size: 17px;
-}
-
-/* cards --------------------------------------------------------- */
-
-.card {
-  position: relative;
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(
-      160deg,
-      rgba(255, 255, 255, 0.045),
-      rgba(255, 255, 255, 0.012)
-    ),
-    var(--surface);
+  backdrop-filter: blur(12px);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  color: var(--text-mid);
 }
 
-/* scroll reveal ------------------------------------------------- */
+.kicker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 10px rgba(169, 255, 103, 0.8);
+}
 
+/* Frosted panel — the editor's sidebar/inspector/timeline surface. */
+.panel {
+  border-radius: var(--panel-radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------
+   Reveal — words rise out of a blur, staggered.
+   `--i` is the word index, set inline by <Words>.
+   --------------------------------------------------------------- */
+
+.words {
+  display: inline;
+}
+
+.words__w {
+  display: inline-block;
+  white-space: pre;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(0.4em);
+  transition:
+    opacity 0.9s var(--ease-out),
+    filter 0.9s var(--ease-out),
+    transform 0.9s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 55ms + var(--delay, 0ms));
+}
+
+.is-revealed .words__w {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+/* Whole-block reveal for anything that isn't split text. */
 [data-reveal] {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(22px);
   transition:
-    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.9s var(--ease-out),
+    transform 0.9s var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
 [data-reveal].is-visible {
   opacity: 1;
   transform: none;
+}
+
+/* ---------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 13px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.35s var(--ease-out),
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.35s var(--ease-out);
+}
+
+/* White is the product's primary action — matches the editor's Render. */
+.btn--primary {
+  background: var(--white);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 10px 34px -14px rgba(255, 255, 255, 0.5);
+}
+
+.btn--primary:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 46px -16px rgba(255, 255, 255, 0.55);
+}
+
+.btn--ghost {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.btn--lg {
+  padding: 17px 34px;
+  font-size: 17px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -256,8 +338,10 @@ input {
     transition-duration: 0.001ms !important;
   }
 
+  .words__w,
   [data-reveal] {
     opacity: 1;
+    filter: none;
     transform: none;
   }
 }

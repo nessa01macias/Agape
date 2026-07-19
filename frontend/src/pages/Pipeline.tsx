@@ -93,8 +93,11 @@ export function Pipeline() {
     return () => clearTimeout(id)
   }, [beat, picking])
 
+  // The turn waits for the beat to lift. Otherwise the site collapses into
+  // clips behind the overlay and nobody ever sees it — which would waste
+  // the one second that explains what this product does.
   const act: 'read' | 'build' | 'done' =
-    phase === 'done' ? 'done' : decision ? 'build' : 'read'
+    phase === 'done' ? 'done' : decision && !beat ? 'build' : 'read'
 
   const clips = useMemo(() => {
     if (!frames.length) return []
@@ -163,7 +166,8 @@ export function Pipeline() {
               <i />
             </span>
             <span className="window__file">
-              {job.scene.brandName}-launch · assembling
+              {job.scene.brandName}-launch ·{' '}
+              {act === 'done' ? 'final cut' : 'assembling'}
             </span>
             <span
               className={`window__badge ${act === 'done' ? 'is-idle' : ''}`}
@@ -195,14 +199,30 @@ export function Pipeline() {
               <span className="site__scan" />
             </div>
 
-            {/* ACT III — the shots, drawn as they're storyboarded. */}
-            <div className="board" aria-live="polite">
-              {frames.map((frame) => (
-                <figure className="board__shot" key={frame.index}>
-                  <span className="board__thumb" />
-                  <figcaption>{frame.title}</figcaption>
-                </figure>
-              ))}
+            {/* Everything the agents make lands here, centred, so the
+                stage never shows a hole between the site falling away
+                and the first frame arriving. */}
+            <div className="pipe__canvas">
+              {/* ACT III — the shots, drawn as they're storyboarded. */}
+              <div className="board" aria-live="polite">
+                {frames.map((frame) => (
+                  <figure className="board__shot" key={frame.index}>
+                    <span className="board__thumb" />
+                    <figcaption>{frame.title}</figcaption>
+                  </figure>
+                ))}
+              </div>
+
+              {/* The script, becoming captions. */}
+              {script.length > 0 && act !== 'done' && (
+                <div className="lines">
+                  {script.map((line) => (
+                    <span className="lines__row" key={line}>
+                      {line}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* The finished cut. */}
@@ -232,17 +252,6 @@ export function Pipeline() {
                     Open the editor
                   </button>
                 </div>
-              </div>
-            )}
-
-            {/* The script, becoming captions. */}
-            {script.length > 0 && act !== 'done' && (
-              <div className="lines">
-                {script.map((line) => (
-                  <span className="lines__row" key={line}>
-                    {line}
-                  </span>
-                ))}
               </div>
             )}
 

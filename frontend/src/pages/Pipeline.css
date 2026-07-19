@@ -34,14 +34,16 @@
   filter: blur(100px);
 }
 
+/* Centred with `translate`, not `transform`, so the breathing animation
+   below can own `transform` outright without knocking the glow sideways. */
 .pipe__glow--teal {
   width: min(1200px, 140vw);
   height: 680px;
   left: 50%;
   bottom: -320px;
-  transform: translateX(-50%);
+  translate: -50% 0;
   background: var(--glow-teal);
-  animation: hero-breathe 16s ease-in-out infinite;
+  animation: pipe-breathe 16s ease-in-out infinite;
 }
 
 .pipe__glow--lime {
@@ -49,9 +51,21 @@
   height: 380px;
   left: 50%;
   top: -8%;
-  transform: translateX(-50%);
+  translate: -50% 0;
   background: var(--glow-lime);
-  animation: hero-breathe 20s ease-in-out infinite reverse;
+  animation: pipe-breathe 20s ease-in-out infinite reverse;
+}
+
+@keyframes pipe-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
 }
 
 .pipe__grid {
@@ -118,6 +132,7 @@
   color: var(--lime);
   font-size: 12.5px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .pipe__clock {
@@ -134,24 +149,30 @@
   width: 100%;
   max-width: var(--page);
   margin-inline: auto;
-  padding-inline: var(--gutter);
+  padding: 0 var(--gutter) 8px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 28px;
-  align-items: start;
+  /* The window earns the height — a short card floating in a tall dark
+     page reads as a stall, which is the one thing this screen can't do. */
+  align-items: stretch;
+  min-height: 0;
 }
 
 .pipe__window {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .pipe__stage {
   position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 22px;
-  min-height: min(56vh, 440px);
+  min-height: min(52vh, 400px);
 }
 
 /* ACT I — their site, being read --------------------------------- */
@@ -224,13 +245,16 @@
   animation-delay: 720ms;
 }
 
+/* Barely there. The lime belongs to the scan line — if the blocks glow
+   too, the whole wireframe reads as one green smear instead of a page
+   being passed over. */
 @keyframes site-read {
   0%,
   100% {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.06);
   }
   45% {
-    background: rgba(169, 255, 103, 0.2);
+    background: rgba(169, 255, 103, 0.13);
   }
 }
 
@@ -238,9 +262,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(90deg, transparent, var(--lime), transparent);
-  box-shadow: 0 0 22px 5px rgba(169, 255, 103, 0.3);
+  box-shadow: 0 0 16px 2px rgba(169, 255, 103, 0.22);
   animation: site-scan 2.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
 
@@ -270,8 +294,30 @@
   opacity: 0;
 }
 
+/* The thesis of the whole product, in 900ms: the page they wrote turns
+   into the clips of a timeline. The blocks take the timeline's own
+   colours on the way down — a dim block just fading out reads as
+   nothing happening, which is exactly the wrong note here. */
+/* The tint is set here rather than inside the keyframe: `var()` in a
+   keyframe doesn't resolve reliably, and the blocks came out with no
+   background at all — invisible at exactly the wrong moment. */
 .site.is-falling .site__block {
-  animation: site-fall 720ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+  --fall-tint: var(--lime);
+  background: var(--fall-tint);
+  animation: site-fall 900ms cubic-bezier(0.5, 0, 0.75, 0.4) forwards;
+}
+
+.site.is-falling .site__block:nth-child(2) {
+  --fall-tint: #3b6b72;
+}
+.site.is-falling .site__block:nth-child(3) {
+  --fall-tint: var(--yellow);
+}
+.site.is-falling .site__block:nth-child(4) {
+  --fall-tint: #3b6b72;
+}
+.site.is-falling .site__block:nth-child(5) {
+  --fall-tint: var(--lime);
 }
 
 .site.is-falling .site__block:nth-child(1) {
@@ -290,48 +336,103 @@
   animation-delay: 280ms;
 }
 
+/* Hold as lit clips for a beat, then drop out of frame. */
 @keyframes site-fall {
-  to {
-    transform: translateY(240px) rotate(-3deg);
+  0%,
+  26% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  /* Short travel on purpose — the frame clips at 260px, so a longer
+     drop just vanishes instead of reading as movement. */
+  100% {
+    transform: translateY(150px) rotate(-4deg);
     opacity: 0;
   }
 }
 
+/* Only the frame dissolves — fading the container would take the blocks
+   down with it and there'd be nothing left to watch. */
 @keyframes site-dissolve {
   to {
-    opacity: 0;
+    background: transparent;
     border-color: transparent;
   }
 }
 
 /* ACT III — the shots, as they're storyboarded ------------------- */
 
+/* Grows to fill whatever the site and the timeline don't, and centres
+   its contents — so an empty moment reads as breathing room, not a hole. */
+.pipe__canvas {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
 .board {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 .board__shot {
   margin: 0;
-  flex: 1 1 140px;
-  max-width: 200px;
+  min-width: 0;
+  /* Capped so two frames don't balloon before the third lands. */
+  flex: 1 1 0;
+  max-width: 250px;
   animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* The discovered accent — the same colour the render will use. */
+/* Each thumb rehearses the real composition — titles down the left,
+   phone glowing on the right — in the accent the render will use. So
+   the storyboard is a promise the video actually keeps. */
 .board__thumb {
+  position: relative;
   display: block;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
   border: 1px solid var(--border);
+  overflow: hidden;
   background:
     radial-gradient(
-      ellipse 70% 60% at 62% 38%,
-      color-mix(in srgb, var(--accent, #6c5ce7) 55%, transparent),
-      transparent 68%
+      ellipse 46% 62% at 72% 48%,
+      color-mix(in srgb, var(--accent, #6c5ce7) 42%, transparent),
+      transparent 70%
     ),
-    linear-gradient(150deg, #131a1c, #0b0e10);
+    linear-gradient(150deg, #131a1c, #0a0d0f);
+}
+
+/* the title stack */
+.board__thumb::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  top: 34%;
+  width: 30%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 12px 0 -1px rgba(255, 255, 255, 0.22),
+    0 24px 0 -1px rgba(255, 255, 255, 0.14);
+}
+
+/* the phone */
+.board__thumb::after {
+  content: '';
+  position: absolute;
+  right: 16%;
+  top: 20%;
+  bottom: 20%;
+  width: 17%;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: color-mix(in srgb, var(--accent, #6c5ce7) 55%, #0b0e10);
+  transform: rotate(-8deg);
 }
 
 .board__shot figcaption {
@@ -364,7 +465,7 @@
 /* timeline ------------------------------------------------------- */
 
 .pipe__timeline {
-  margin-top: auto;
+  flex: none;
 }
 
 .pipe__timeline .clip {
@@ -675,6 +776,13 @@
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+
+@media (max-width: 700px) {
+  /* The header only has room for who and how long. */
+  .pipe__format {
+    display: none;
   }
 }
 

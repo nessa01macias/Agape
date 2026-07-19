@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
-import { delay } from '../hooks/useReveal'
+import { useMemo, useState, type FormEvent } from 'react'
+import { usePointerLight } from '../hooks/usePointerLight'
+import { useTypewriter } from '../hooks/useTypewriter'
+import { Words } from './Words'
 import './Hero.css'
 
 /** Accepts `acme.com`, `www.acme.com`, `https://acme.com/launch` … */
@@ -26,13 +28,20 @@ type HeroProps = {
 export function Hero({ onAnalyze }: HeroProps) {
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const lightRef = usePointerLight<HTMLElement>()
+
+  const phrases = useMemo(
+    () => ['linear.app', 'yourstartup.com', 'acme.io', 'notion.so'],
+    [],
+  )
+  const ghost = useTypewriter(phrases, value === '')
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     const url = normalizeUrl(value)
 
     if (!url) {
-      setError("That doesn't look like a website — try acme.com")
+      setError('Needs to look like a website — try acme.com')
       return
     }
 
@@ -41,88 +50,63 @@ export function Hero({ onAnalyze }: HeroProps) {
   }
 
   return (
-    <section className="hero" id="top">
+    <section className="hero" id="top" ref={lightRef}>
       <div className="hero__bg" aria-hidden="true">
-        <span className="hero__glow hero__glow--teal" />
-        <span className="hero__glow hero__glow--lime" />
+        <span className="hero__halo" />
+        <span className="hero__beam" />
         <span className="hero__grid" />
       </div>
 
       <div className="hero__inner container">
-        <p className="hero__badge" data-reveal>
-          <span className="hero__dot" />
-          Agentic video editing — now in early access
-        </p>
+        <p className="kicker hero__kicker">Agentic video editor</p>
 
-        <h1 className="hero__title" data-reveal style={delay(80)}>
-          Late for tomorrow's launch?
-          <span className="hero__title-accent">We are here to help.</span>
+        <h1 className="hero__title">
+          <Words className="bloom hero__line" immediate delay={120}>
+            Late for tomorrow's launch?
+          </Words>
+          <Words className="bloom--teal hero__line" immediate delay={520}>
+            We are here to help.
+          </Words>
         </h1>
 
-        <p
-          className="hero__lede"
-          data-reveal
-          style={delay(160)}
-        >
-          Drop your website. Agape reads your product, your colors, and your
-          voice — then cuts the launch video, the vertical teaser, and the ad
-          variants while you finish the release notes.
-        </p>
-
-        <form
-          className="hero__form"
-          onSubmit={handleSubmit}
-          data-reveal
-          style={delay(240)}
-          noValidate
-        >
+        <form className="hero__form" onSubmit={handleSubmit} noValidate>
           <div className={`hero__field ${error ? 'has-error' : ''}`}>
-            <svg className="hero__field-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3.5 12h17M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18" />
-            </svg>
+            <span className="hero__scheme" aria-hidden="true">
+              https://
+            </span>
 
-            <input
-              type="text"
-              inputMode="url"
-              autoComplete="url"
-              spellCheck={false}
-              placeholder="Paste your website — acme.com"
-              aria-label="Your website URL"
-              aria-invalid={Boolean(error)}
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value)
-                if (error) setError(null)
-              }}
-            />
+            <span className="hero__entry">
+              <input
+                type="text"
+                inputMode="url"
+                autoComplete="url"
+                spellCheck={false}
+                aria-label="Your website URL"
+                aria-invalid={Boolean(error)}
+                value={value}
+                onChange={(event) => {
+                  setValue(event.target.value)
+                  if (error) setError(null)
+                }}
+              />
+              {value === '' && (
+                <span className="hero__ghost" aria-hidden="true">
+                  {ghost}
+                  <i className="hero__caret" />
+                </span>
+              )}
+            </span>
 
             <button type="submit" className="btn btn--primary hero__submit">
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="hero__spark">
-                <path d="M12 3.5 13.9 9 19.5 11l-5.6 2L12 18.5 10.1 13 4.5 11 10.1 9z" />
-                <path d="M18.5 3.5 19.2 5.6 21.2 6.3 19.2 7 18.5 9 17.8 7 15.8 6.3 17.8 5.6z" />
-              </svg>
-              Make my video
+              Make the video
             </button>
           </div>
 
-          <p className="hero__error" role="alert">
-            {error}
+          <p className="hero__note" role={error ? 'alert' : undefined}>
+            {error ?? 'One link. Four minutes. No timeline.'}
           </p>
         </form>
-
-        <p
-          className="hero__note"
-          data-reveal
-          style={delay(320)}
-        >
-          No timeline. No credit card. First cut in about four minutes.
-        </p>
       </div>
-
-      <a className="hero__scroll" href="#how-it-works" aria-label="Keep scrolling">
-        <span />
-      </a>
     </section>
   )
 }

@@ -32,9 +32,25 @@ things to move around.
 ## Repo
 
 ```
-backend/    Python + FastAPI  — planning and rendering
-frontend/   React + Vite + TS — the editing UI
+backend/    Python + FastAPI  — reads the site, plans the edit
+frontend/   React + Vite + TS — landing, pipeline screen, editor,
+                                and the Remotion composition itself
 ```
+
+The flow is one URL, carried the whole way:
+
+```
+/                     paste a website
+/pipeline?url=…       the agents read it — you watch them work
+/editor?url=…         the cut, playing, with everything that fed it
+```
+
+Until the backend answers, the frontend falls back to a scripted mock
+stream, so the whole flow is demoable today. See
+[`frontend/README.md`](frontend/README.md).
+
+> **Open decision:** rendering an MP4 needs Node — `@remotion/renderer`
+> has no Python equivalent — so the backend language is unsettled.
 
 ## Quickstart
 

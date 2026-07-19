@@ -3,6 +3,8 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { Player } from '@remotion/player'
 import { Logo } from '../components/Logo'
 import { useJob } from '../hooks/useJob'
+import { useRender } from '../hooks/useRender'
+import type { Job } from '../lib/jobs'
 import { Scene } from '../remotion/Scene'
 import {
   DURATION_IN_FRAMES,
@@ -46,14 +48,7 @@ function EditorView({ url }: { url: string }) {
           )}
         </div>
 
-        <button
-          type="button"
-          className="btn btn--primary editor__export"
-          disabled
-          title="Rendering needs the Node render service — not wired up yet."
-        >
-          Export MP4
-        </button>
+        <ExportButton job={job.job} ready={job.ready} />
       </header>
 
       <div
@@ -97,6 +92,53 @@ function EditorView({ url }: { url: string }) {
         </main>
       </div>
     </div>
+  )
+}
+
+/**
+ * Export is only meaningful once the pipeline has finished (there are no
+ * scene props before that) and only against a real backend — a mock job
+ * has no project to render.
+ */
+function ExportButton({ job, ready }: { job: Job | null; ready: boolean }) {
+  const { state, start } = useRender(job)
+
+  if (state.phase === 'done') {
+    return (
+      <a className="btn btn--primary editor__export" href={state.url} download>
+        Download MP4
+      </a>
+    )
+  }
+
+  const busy = state.phase === 'starting' || state.phase === 'rendering'
+  const mock = job?.source === 'mock'
+
+  const label =
+    state.phase === 'starting'
+      ? 'Starting…'
+      : state.phase === 'rendering'
+        ? `Rendering ${Math.round(state.progress * 100)}%`
+        : 'Export MP4'
+
+  return (
+    <button
+      type="button"
+      className="btn btn--primary editor__export"
+      disabled={busy || mock || !ready}
+      onClick={() => void start()}
+      title={
+        mock
+          ? "The backend isn't answering — start it to export."
+          : !ready
+            ? 'Still cutting — export once the pipeline finishes.'
+            : state.phase === 'error'
+              ? state.message
+              : 'Render this cut to an MP4'
+      }
+    >
+      {state.phase === 'error' ? 'Retry export' : label}
+    </button>
   )
 }
 

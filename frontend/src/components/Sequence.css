@@ -1,0 +1,689 @@
+/* ---------------------------------------------------------------
+   Sequence — the editor assembling itself, scrubbed by scroll.
+
+   useScrollProgress writes `--progress` (0→1) on .seq__track. Every
+   moving part derives from it, so nothing animates in JS: one custom
+   property changes per frame and CSS does the rest.
+
+   Cued elements carry `--in` (when they start) and `--ramp` (how fast
+   they resolve); `--t` is that element's own 0→1 timeline.
+
+   Chrome follows the Editor mock: panels are rgba(255,255,255,.04)
+   over a .08 border at 20px radius, teal is the active state, and the
+   only white fill is the primary action.
+   --------------------------------------------------------------- */
+
+@property --progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.seq {
+  background: linear-gradient(180deg, #090909 0%, #0c1a1d 52%, #0a1214 100%);
+}
+
+.seq__track {
+  --progress: 0;
+  height: 320vh;
+}
+
+.seq__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(18px, 3vh, 38px);
+  padding: 92px var(--gutter) 40px;
+  max-width: var(--page);
+  margin-inline: auto;
+}
+
+.seq__head {
+  text-align: center;
+  flex: none;
+}
+
+.seq__title {
+  font-size: clamp(30px, 4.6vw, 62px);
+}
+
+.seq__sub {
+  margin: 12px auto 0;
+}
+
+/* ---------------------------------------------------------------
+   The editor window
+   --------------------------------------------------------------- */
+
+.ed {
+  --t: clamp(0, calc(var(--progress) * 16), 1);
+
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #0b1113 0%, #0d181b 60%, #12242790 100%);
+  box-shadow: 0 60px 120px -50px rgba(0, 0, 0, 1);
+  overflow: hidden;
+  font-weight: 300;
+
+  opacity: calc(0.35 + var(--t) * 0.65);
+  transform: translateY(calc((1 - var(--t)) * 34px))
+    scale(calc(0.975 + var(--t) * 0.025));
+}
+
+/* menu bar ------------------------------------------------------ */
+
+.ed__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+}
+
+.ed__mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--teal-active);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  position: relative;
+}
+
+.ed__mark::after {
+  content: '';
+  position: absolute;
+  left: 55%;
+  top: 50%;
+  translate: -50% -50%;
+  border-style: solid;
+  border-width: 4.5px 0 4.5px 8px;
+  border-color: transparent transparent transparent #fff;
+}
+
+.ed__menu {
+  display: flex;
+  gap: 2px;
+}
+
+.ed__menu i {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ed__file {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed__file s {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ed__file b {
+  color: #fff;
+  font-weight: 500;
+}
+
+.ed__actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.ed__share,
+.ed__render {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.ed__share {
+  border: 1px solid var(--border-strong);
+  background: var(--panel);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Goes solid white only once the cut is actually ready. */
+.ed__render {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, calc(0.14 + var(--t) * 0.86));
+  background: rgba(255, 255, 255, var(--t));
+  color: rgb(
+    calc(255 - var(--t) * 246) calc(255 - var(--t) * 246)
+      calc(255 - var(--t) * 246)
+  );
+  box-shadow: 0 0 calc(var(--t) * 26px) rgba(255, 255, 255, calc(var(--t) * 0.35));
+}
+
+/* main row ------------------------------------------------------ */
+
+.ed__main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 186px minmax(0, 1fr) 176px;
+  gap: 8px;
+}
+
+.ed__tabs {
+  display: flex;
+  gap: 5px;
+  padding: 9px 9px 0;
+  flex: none;
+}
+
+.ed__tabs i {
+  flex: 1;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--text-mid);
+}
+
+.ed__tabs i.is-on {
+  background: var(--teal-active);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* sidebar: the agents ------------------------------------------- */
+
+.ed__side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ed__stages {
+  list-style: none;
+  margin: 0;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stage {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  column-gap: 10px;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(37, 69, 74, var(--t));
+  opacity: calc(0.3 + var(--t) * 0.7);
+}
+
+.stage__dot {
+  grid-row: span 2;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, calc(0.25 + var(--t) * 0.75));
+  box-shadow: 0 0 calc(var(--t) * 12px) rgba(169, 255, 103, calc(var(--t) * 0.9));
+}
+
+.stage__name {
+  font-size: 12.5px;
+  font-weight: calc(400 + var(--t) * 100);
+  color: rgba(255, 255, 255, calc(0.65 + var(--t) * 0.35));
+}
+
+.stage__verb {
+  grid-column: 2;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* preview ------------------------------------------------------- */
+
+.ed__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ed__frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--border);
+  background: rgba(9, 9, 9, 0.5);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.ed__label {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  z-index: 2;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ed__poster {
+  position: absolute;
+  inset: 0;
+  opacity: clamp(0, calc((var(--progress) - 0.36) * 6), 1);
+  background:
+    radial-gradient(ellipse 60% 70% at 32% 28%, rgba(59, 98, 105, 0.75), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 76% 72%, rgba(37, 69, 74, 0.9), transparent 64%),
+    linear-gradient(150deg, #163034, #0b1416 72%);
+}
+
+/* the 9:16 re-frame, drawn over the master late in the scrub */
+.ed__crop {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 88%;
+  aspect-ratio: 9 / 16;
+  translate: -50% -50%;
+  z-index: 2;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  opacity: var(--t);
+  transform: scale(calc(0.88 + var(--t) * 0.12));
+  box-shadow: 0 0 0 100vmax rgba(9, 9, 9, calc(var(--t) * 0.5));
+  display: grid;
+  place-items: start center;
+}
+
+.ed__crop b {
+  margin-top: -9px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ed__caption {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 3;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(9, 9, 9, 0.72);
+  backdrop-filter: blur(6px);
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  opacity: var(--t);
+  transform: translateY(calc((1 - var(--t)) * 8px));
+}
+
+.ed__caption b {
+  color: var(--lime);
+  font-weight: 600;
+}
+
+.ed__transport {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ed__time {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.ed__time s {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ed__play {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  position: relative;
+}
+
+.ed__play::after {
+  content: '';
+  position: absolute;
+  left: 55%;
+  top: 50%;
+  translate: -50% -50%;
+  border-style: solid;
+  border-width: 4.5px 0 4.5px 7.5px;
+  border-color: transparent transparent transparent var(--ink);
+}
+
+/* inspector ----------------------------------------------------- */
+
+.ed__inspector {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ed__props {
+  padding: 12px 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ed__props > b {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  padding: 0 6px 9px;
+}
+
+.ed__prop {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: var(--t);
+  transform: translateY(calc((1 - var(--t)) * 5px));
+}
+
+.ed__prop i {
+  font-size: 10.5px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ed__prop em {
+  font-size: 10.5px;
+  font-style: normal;
+  color: #fff;
+}
+
+/* timeline ------------------------------------------------------ */
+
+.ed__timeline {
+  --gutter-w: 92px;
+  flex: none;
+  height: clamp(150px, 27vh, 236px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ed__tl-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ed__tc {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.ed__tc-total {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ed__tools {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.ed__tools i {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 11px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ed__tools i.is-on {
+  background: #fff;
+  color: var(--ink);
+}
+
+.ed__ruler {
+  flex: none;
+  display: flex;
+  height: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.ed__gutter {
+  width: var(--gutter-w);
+  flex: none;
+  border-right: 1px solid var(--border);
+}
+
+.ed__ticks {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.ed__ticks i {
+  flex: 1;
+  padding: 4px 0 0 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 9.5px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ed__tracks {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.trk {
+  display: flex;
+  height: 20%;
+  min-height: 26px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trk__head {
+  width: var(--gutter-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 14px;
+  border-right: 1px solid var(--border);
+}
+
+.trk__head b {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.15;
+}
+
+.trk__head i {
+  font-size: 8.5px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.15;
+}
+
+.trk__lane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.cl {
+  --t: clamp(0, calc((var(--progress) - var(--in)) * var(--ramp)), 1);
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  opacity: clamp(0, calc(var(--t) * 3), 1);
+  /* Reveal left-to-right without scaling — scaleX would squash the label. */
+  clip-path: inset(0 calc((1 - var(--t)) * 100%) 0 0);
+}
+
+.cl--teal {
+  background: var(--teal-active);
+}
+
+.cl--soft {
+  background: var(--clip-soft);
+}
+
+.cl--aud {
+  background: rgba(37, 69, 74, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* The selected clip, as in the editor: a bright white outline. */
+.cl--sel {
+  background: var(--clip);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+}
+
+.ed__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  width: 1.5px;
+  border-radius: 2px;
+  background: #fff;
+  /* Stops at 94% so the centred timecode label never clips the edge. */
+  left: calc(
+    var(--gutter-w) + (100% - var(--gutter-w)) * var(--progress) * 0.94
+  );
+  opacity: clamp(0, calc(var(--progress) * 12), 1);
+}
+
+.ed__playhead b {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------
+   Narrow screens: drop the side panels, keep preview + timeline.
+   --------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .ed__main {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+
+  .ed__inspector {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .ed__main {
+    grid-template-columns: 1fr;
+  }
+
+  .ed__side,
+  .ed__menu,
+  .ed__file {
+    display: none;
+  }
+
+  .ed__timeline {
+    --gutter-w: 56px;
+  }
+}
+
+/* Without motion the scrub means nothing — show the finished cut. */
+@media (prefers-reduced-motion: reduce) {
+  .seq__track {
+    height: auto;
+    --progress: 1;
+  }
+
+  .seq__sticky {
+    position: static;
+    height: auto;
+    min-height: 0;
+  }
+
+  .ed {
+    height: 78vh;
+  }
+}

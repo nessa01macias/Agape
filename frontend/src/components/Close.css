@@ -1,0 +1,44 @@
+.close {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding-block: clamp(120px, 16vw, 230px);
+}
+
+.close__glow {
+  position: absolute;
+  left: 50%;
+  bottom: -46%;
+  width: min(1200px, 140vw);
+  height: 700px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(37, 69, 74, 0.95),
+    rgba(37, 69, 74, 0.45) 44%,
+    transparent 72%
+  );
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.close__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.close__title {
+  font-size: var(--t-display);
+  letter-spacing: -0.045em;
+}
+
+.close__line {
+  display: block;
+}
+
+.close__cta {
+  margin-top: clamp(36px, 4.5vw, 56px);
+}

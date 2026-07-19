@@ -2,10 +2,16 @@ import { useEffect, useRef, type RefObject } from 'react'
 
 type Options = {
   /**
-   * Where in the viewport progress hits 0 and 1, as a fraction of viewport
-   * height. `[1, 0]` means: 0 when the element's top touches the bottom of the
-   * viewport, 1 when its bottom touches the top.
+   * `travel` — 0 when the element's top reaches the bottom of the viewport,
+   * 1 when its bottom passes the top. Good for parallax on normal blocks.
+   *
+   * `sticky` — 0 when the element's top hits the top of the viewport, 1 when
+   * its bottom hits the bottom. That is exactly the range over which a
+   * `position: sticky` child stays pinned, so a scrubbed sequence finishes on
+   * the last pinned frame instead of after the panel has already scrolled away.
    */
+  mode?: 'travel' | 'sticky'
+  /** `travel` only: viewport-height fractions for the 0 and 1 anchor lines. */
   from?: number
   to?: number
 }
@@ -18,6 +24,7 @@ type Options = {
  * section costs nothing.
  */
 export function useScrollProgress<T extends HTMLElement>({
+  mode = 'travel',
   from = 1,
   to = 0,
 }: Options = {}): RefObject<T | null> {
@@ -33,12 +40,19 @@ export function useScrollProgress<T extends HTMLElement>({
     const measure = () => {
       const rect = el.getBoundingClientRect()
       const vh = window.innerHeight || 1
+      let progress: number
 
-      // Distance travelled between the `from` and `to` anchor lines.
-      const start = vh * from
-      const end = -rect.height + vh * to
-      const span = start - end || 1
-      const progress = (start - rect.top) / span
+      if (mode === 'sticky') {
+        // The pinned range: from top-aligned until the bottom edge arrives.
+        const span = rect.height - vh || 1
+        progress = -rect.top / span
+      } else {
+        // Distance travelled between the `from` and `to` anchor lines.
+        const start = vh * from
+        const end = -rect.height + vh * to
+        const span = start - end || 1
+        progress = (start - rect.top) / span
+      }
 
       el.style.setProperty('--progress', String(Math.min(1, Math.max(0, progress))))
     }
@@ -70,7 +84,7 @@ export function useScrollProgress<T extends HTMLElement>({
       running = false
       cancelAnimationFrame(frame)
     }
-  }, [from, to])
+  }, [mode, from, to])
 
   return ref
 }
