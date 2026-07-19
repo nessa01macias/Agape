@@ -203,17 +203,18 @@ export function useJob(url: string): UseJob {
       state.artifacts.find((a) => a.kind === 'screenshot')?.value ??
       state.artifacts.find((a) => a.kind === 'image')?.src
 
-    // The writer streams its lines in render order; the second is the
-    // tagline. They land one at a time, so the preview fills in as they
-    // arrive rather than waiting for the whole plan.
-    const [, taglineLine] = state.script
+    // The writer streams its three lines in render order — headline
+    // (shot 1), tagline (shot 4), cta (shot 5). They land one at a time,
+    // so the preview fills in as they arrive rather than waiting for the
+    // whole plan.
+    const [headlineLine, taglineLine, ctaLine] = state.script
 
     return {
       brandName: guess.name,
       domain: guess.domain,
-      headline: 'Your launch deserves better.',
+      headline: headlineLine ?? 'Your launch deserves better.',
       tagline: taglineLine ?? copy ?? 'Something big is coming.',
-      cta: 'Get early access',
+      cta: ctaLine ?? 'Get early access',
       screenshotUrl,
       theme: {
         ...DEFAULT_THEME,

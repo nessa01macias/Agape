@@ -104,8 +104,11 @@ app.get('/api/projects/:id/plan', (req, res) => {
     scene: job.scene,
     format: job.format ?? job.plan.format,
     reason: job.plan.reason,
+    titles: job.plan.titles,
     script: job.plan.script,
     shots: job.plan.shots,
+    accent: job.plan.accent,
+    screenshot_url: job.screenshotUrl,
     /** False means the model was unavailable and this is the scripted cut. */
     from_model: job.plan.fromModel,
   })
@@ -123,9 +126,15 @@ app.post('/api/projects/:id/render', (req, res) => {
     return
   }
 
-  // Fall back to what the planner wrote, so a bare POST renders the
-  // cut the user just watched being planned.
-  const planned = job.scene && { ...job.scene, ...(job.plan?.titles ?? {}) }
+  // Fall back to what the planner wrote, so a bare POST renders the cut
+  // the user just watched being planned. Shape mirrors `launchSchema`.
+  const planned = job.scene && {
+    brandName: job.scene.brandName,
+    domain: job.scene.domain,
+    ...(job.plan?.titles ?? {}),
+    screenshotUrl: job.screenshotUrl ?? undefined,
+    ...(job.plan ? { accent: job.plan.accent } : {}),
+  }
   const parsed = sceneProps.safeParse(
     Object.keys(req.body ?? {}).length ? req.body : planned,
   )

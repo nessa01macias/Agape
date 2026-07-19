@@ -22,9 +22,21 @@ import type { Scraped } from './scrape.ts'
  */
 const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash'
 
-/** Matches the Remotion composition — the plan has to fit the cut. */
+/** Matches frontend/src/remotion/constants.ts — a 12s, five-shot cut. */
 const FPS = 30
-const TOTAL_FRAMES = 210
+const TOTAL_FRAMES = 360
+
+/**
+ * The template's shots are fixed in length, so the model writes copy for
+ * each rather than choosing durations. Ids mirror `SHOTS` in constants.ts.
+ */
+const SHOT_BRIEFS = [
+  ['hook', 'Opens cold on a single provocative line. No brand yet.'],
+  ['intro', 'The brand name lands.'],
+  ['product', 'Their actual product, shown on screen.'],
+  ['payoff', 'The promise, stated plainly.'],
+  ['lockup', 'Brand, domain, and the call to action.'],
+] as const
 
 /** Each shot costs input tokens; the landing page carries most of the signal. */
 const MAX_SHOTS_TO_SEND = 3
@@ -32,9 +44,9 @@ const IMAGE_TIMEOUT_MS = 15_000
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024
 
 export type Shot = {
+  /** One of the ids in `SHOTS` — hook, intro, product, payoff, lockup. */
+  id: string
   title: string
-  description: string
-  durationInFrames: number
 }
 
 /**
@@ -43,12 +55,12 @@ export type Shot = {
  * these are the only lines the model actually gets to author.
  */
 export type Titles = {
-  /** Small accent line above the brand name. */
-  eyebrow: string
-  /** One line under the brand name. */
+  /** Shot 1. Opens the film before the brand appears. */
+  headline: string
+  /** Shot 4. The promise, once the product has been shown. */
   tagline: string
-  /** The line across the bottom of the phone screen. */
-  footer: string
+  /** Shot 5. What the viewer should do next. */
+  cta: string
 }
 
 export type VideoPlan = {
@@ -84,39 +96,45 @@ const planSchema = {
     titles: {
       type: Type.OBJECT,
       description:
-        'The three lines of on-screen text. The brand name and domain are already on screen — do not repeat them here.',
+        'The three lines of on-screen copy. The brand name and domain appear on their own — never repeat them here.',
       properties: {
-        eyebrow: {
+        headline: {
           type: Type.STRING,
           description:
-            'A complete standalone label of one to three words that sits above the brand name, uppercase — e.g. "INTRODUCING", "NOW LIVE", "MEET", "OUT NOW". It must read as a finished phrase on its own: never the opening words of a sentence that continues elsewhere, and never a fragment ending in a possessive or article.',
+            'Shot 1, before the brand is named. One sentence that would make their customer keep watching — the problem they feel, or the change this product makes. Under nine words. Do not name the company.',
         },
         tagline: {
           type: Type.STRING,
           description:
-            'One line under the brand name: what this product does for someone, in eight words or fewer. Plain language, no buzzwords, no trailing period.',
+            'Shot 4, after the product has been shown. What it does for someone, in eight words or fewer. Plain language, no buzzwords, no trailing period.',
         },
-        footer: {
+        cta: {
           type: Type.STRING,
           description:
-            'Two or three words across the bottom of a phone screen, uppercase — e.g. "LAUNCHING SOON", "OUT NOW", "JOIN THE BETA".',
+            'Shot 5. What the viewer should do next, in two to four words — e.g. "Start for free", "Get the app", "Book a demo". Sentence case. Use the wording on their own primary button when the screenshots show one.',
         },
       },
-      required: ['eyebrow', 'tagline', 'footer'],
-      propertyOrdering: ['eyebrow', 'tagline', 'footer'],
+      required: ['headline', 'tagline', 'cta'],
+      propertyOrdering: ['headline', 'tagline', 'cta'],
     },
     shots: {
       type: Type.ARRAY,
-      description: `Three shots in screen order. durationInFrames must sum to exactly ${TOTAL_FRAMES} at ${FPS}fps — vary them to suit the pacing you want rather than splitting the time evenly.`,
+      description:
+        `Exactly five entries, one per shot, in this order: ${SHOT_BRIEFS.map(([id, brief]) => `${id} (${brief})`).join(' ')} Lengths are fixed by the template — you are naming the shots, not timing them.`,
       items: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING, description: 'Four words or fewer, in sentence case.' },
-          description: { type: Type.STRING, description: 'One sentence on what is on screen.' },
-          durationInFrames: { type: Type.INTEGER },
+          id: {
+            type: Type.STRING,
+            description: `One of: ${SHOT_BRIEFS.map(([id]) => id).join(', ')}.`,
+          },
+          title: {
+            type: Type.STRING,
+            description: 'What happens in this shot. Four words or fewer, sentence case.',
+          },
         },
-        required: ['title', 'description', 'durationInFrames'],
-        propertyOrdering: ['title', 'description', 'durationInFrames'],
+        required: ['id', 'title'],
+        propertyOrdering: ['id', 'title'],
       },
     },
   },
@@ -132,6 +150,8 @@ function systemPrompt(): string {
     'Ground every choice in what you can see. Do not invent product features, customers, or claims.',
     'If the screenshots and the metadata disagree, trust the screenshots — they are the live page.',
     'Write on-screen titles, not voiceover: short, concrete, no marketing filler.',
+    `The cut has five fixed shots: ${SHOT_BRIEFS.map(([id, brief]) => `${id} — ${brief}`).join(' ')}`,
+    'Shot 3 shows a real screenshot of their site, so the copy around it should not describe the interface in words.',
   ].join(' ')
 }
 
@@ -228,41 +248,30 @@ function coerce(raw: unknown, site: Scraped): VideoPlan | null {
     typeof v === 'string' && v.trim() ? v.trim() : fallback
 
   const titles: Titles = {
-    eyebrow: line(t.eyebrow, 'INTRODUCING').toUpperCase().slice(0, 24),
+    headline: line(t.headline, 'Your launch deserves better.').slice(0, 80),
     tagline: line(t.tagline, 'Something big is coming.').slice(0, 72),
-    footer: line(t.footer, 'LAUNCHING SOON').toUpperCase().slice(0, 24),
+    cta: line(t.cta, 'Get early access').slice(0, 32),
   }
 
-  const shots = Array.isArray(p.shots)
-    ? p.shots
-        .filter((s): s is Record<string, unknown> => Boolean(s) && typeof s === 'object')
-        .map((s) => ({
-          title: typeof s.title === 'string' ? s.title : 'Shot',
-          description: typeof s.description === 'string' ? s.description : '',
-          durationInFrames:
-            typeof s.durationInFrames === 'number' && s.durationInFrames > 0
-              ? Math.round(s.durationInFrames)
-              : 0,
-        }))
-        .slice(0, 5)
-    : []
-
-  if (!shots.length) return null
-
-  // Durations must land on exactly TOTAL_FRAMES or the cut runs long or
-  // short; rescale rather than reject an otherwise good plan.
-  const sum = shots.reduce((n, s) => n + s.durationInFrames, 0)
-  if (sum !== TOTAL_FRAMES) {
-    const scale = sum > 0 ? TOTAL_FRAMES / sum : 0
-    let used = 0
-    shots.forEach((shot, i) => {
-      shot.durationInFrames =
-        i === shots.length - 1
-          ? TOTAL_FRAMES - used
-          : Math.max(1, Math.round(shot.durationInFrames * scale))
-      used += shot.durationInFrames
-    })
+  // The template renders five fixed shots by id, so build the list from
+  // the ids rather than from whatever order the model returned. A missing
+  // or misnamed entry falls back to the brief instead of dropping a shot.
+  const byId = new Map<string, string>()
+  if (Array.isArray(p.shots)) {
+    for (const raw of p.shots) {
+      if (!raw || typeof raw !== 'object') continue
+      const shot = raw as Record<string, unknown>
+      if (typeof shot.id === 'string' && typeof shot.title === 'string' && shot.title.trim()) {
+        byId.set(shot.id.trim().toLowerCase(), shot.title.trim().slice(0, 40))
+      }
+    }
   }
+  if (!byId.size) return null
+
+  const shots: Shot[] = SHOT_BRIEFS.map(([id, brief]) => ({
+    id,
+    title: byId.get(id) ?? brief,
+  }))
 
   const chosen =
     typeof p.accent === 'string' && HEX.test(p.accent.trim())
@@ -271,11 +280,11 @@ function coerce(raw: unknown, site: Scraped): VideoPlan | null {
   const accent = legibleAccent(chosen)
 
   return {
-    format: typeof p.format === 'string' && p.format ? p.format : 'Launch teaser — 7s, 16:9',
+    format: typeof p.format === 'string' && p.format ? p.format : 'Launch film — 12s, 16:9',
     reason: typeof p.reason === 'string' ? p.reason : '',
     accent,
     titles,
-    script: [titles.eyebrow, titles.tagline, titles.footer],
+    script: [titles.headline, titles.tagline, titles.cta],
     shots,
     fromModel: true,
   }
@@ -283,26 +292,23 @@ function coerce(raw: unknown, site: Scraped): VideoPlan | null {
 
 /** The plan we ship when the model is unavailable or unusable. */
 export function fallbackPlan(site: Scraped): VideoPlan {
-  const fallbackTitles: Titles = {
-    eyebrow: 'INTRODUCING',
+  const titles: Titles = {
+    headline: 'Your launch deserves better.',
     // Their own words beat ours when we have them.
     tagline:
       site.description?.split(/[.!?]/)[0]?.trim().slice(0, 72) ||
       'Something big is coming.',
-    footer: 'LAUNCHING SOON',
+    cta: 'Get early access',
   }
+
   return {
-    format: 'Launch teaser — 7s, 16:9',
+    format: 'Launch film — 12s, 16:9',
     reason:
-      'The site leads with a product shot and a single call to action, so a short teaser lands harder than a walkthrough.',
-    accent: site.accent,
-    titles: fallbackTitles,
-    script: [fallbackTitles.eyebrow, fallbackTitles.tagline, fallbackTitles.footer],
-    shots: [
-      { title: 'Phone rises out of the dark', description: '', durationInFrames: 70 },
-      { title: 'Brand screen resolves', description: '', durationInFrames: 70 },
-      { title: 'Title card + domain', description: '', durationInFrames: 70 },
-    ],
+      'The site leads with a product shot and a single call to action, so a short launch film lands harder than a walkthrough.',
+    accent: legibleAccent(site.accent),
+    titles,
+    script: [titles.headline, titles.tagline, titles.cta],
+    shots: SHOT_BRIEFS.map(([id, brief]) => ({ id, title: brief })),
     fromModel: false,
   }
 }

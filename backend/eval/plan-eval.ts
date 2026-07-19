@@ -37,13 +37,13 @@ for (const fixture of fixtures) {
   const flag = plan.fromModel ? '' : '   ⚠️  FALLBACK'
   console.log(`━━ ${fixture.site}  (${(ms / 1000).toFixed(1)}s)${flag}`)
   console.log(`   accent   ${plan.accent}   (scraper guessed ${fixture.scraped.accent})`)
-  console.log(`   eyebrow  ${plan.titles.eyebrow}`)
+  console.log(`   headline ${plan.titles.headline}`)
   console.log(`   tagline  ${plan.titles.tagline}`)
-  console.log(`   footer   ${plan.titles.footer}`)
+  console.log(`   cta      ${plan.titles.cta}`)
   console.log(`   format   ${plan.format}`)
   console.log(`   why      ${plan.reason}`)
   for (const shot of plan.shots) {
-    console.log(`   · ${String(shot.durationInFrames).padStart(3)}f  ${shot.title} — ${shot.description}`)
+    console.log(`   · ${shot.id.padEnd(8)} ${shot.title}`)
   }
   console.log()
 }

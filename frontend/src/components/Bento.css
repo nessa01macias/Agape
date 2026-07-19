@@ -4,8 +4,8 @@
    --------------------------------------------------------------- */
 
 .bento__title {
-  font-size: var(--t-display);
-  max-width: 12ch;
+  font-size: clamp(32px, 5.4vw, 76px);
+  max-width: none;
   margin-bottom: clamp(44px, 6vw, 84px);
 }
 

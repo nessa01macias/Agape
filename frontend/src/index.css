@@ -157,6 +157,12 @@ input {
   padding-block: clamp(96px, 13vw, 190px);
 }
 
+/* The nav is fixed and ~74px tall — anchor jumps must clear it. */
+section[id],
+[id='top'] {
+  scroll-margin-top: 88px;
+}
+
 /* ---------------------------------------------------------------
    Big type — white-hot core fading to grey, with a soft bloom.
    This is the page's main voice; body copy is deliberately rare.

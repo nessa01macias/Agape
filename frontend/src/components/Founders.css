@@ -12,13 +12,58 @@
 
 .founders__title {
   margin-top: 20px;
-  font-size: clamp(28px, 4.2vw, 58px);
-  max-width: 22ch;
+  font-size: clamp(28px, 5vw, 66px);
+  /* Wide enough to read across on one line instead of stacking. */
+  max-width: none;
 }
 
-.founders__lede {
-  margin-top: 20px;
-  max-width: 46ch;
+/* The story — the only place on the page that earns real paragraphs. */
+.founders__story {
+  margin-top: 28px;
+  max-width: 54ch;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.founders__story p {
+  font-size: clamp(15px, 1.35vw, 18px);
+  font-weight: 300;
+  line-height: 1.62;
+  color: var(--text-mid);
+}
+
+/* The turn in the story — brighter, and it carries the product idea. */
+.founders__turn {
+  font-weight: 400 !important;
+  color: var(--text-hi) !important;
+}
+
+.founders__fit {
+  position: relative;
+  margin-top: 40px;
+  padding-top: 32px;
+  max-width: 50ch;
+  font-size: clamp(14px, 1.2vw, 16px);
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+/* Hairline rule above the team, drawn from the centre out. */
+.founders__fit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: 140px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-strong),
+    transparent
+  );
 }
 
 .founders__grid {

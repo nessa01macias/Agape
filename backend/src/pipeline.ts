@@ -51,6 +51,12 @@ export type Job = {
   scene: { brandName: string; domain: string; accent: string } | null
   /** What the model decided to cut. Null until the strategist runs. */
   plan: VideoPlan | null
+  /**
+   * The landing-page shot the template shows in shot 3. Firecrawl signs
+   * these and they expire within the hour, so it's good for this session
+   * and not for anything persisted.
+   */
+  screenshotUrl: string | null
   /** The rendered MP4, once the director has actually produced one. */
   renderId: string | null
 }
@@ -92,6 +98,7 @@ export function createJob(id: string, url: string): Job {
     scene: null,
     plan: null,
     renderId: null,
+    screenshotUrl: null,
   }
 
   jobs.set(id, job)
@@ -174,6 +181,7 @@ async function curate(job: Job, site: Scraped): Promise<void> {
   emit(job, { type: 'stage', stage: 'curator', status: 'working', label: 'Pulling brand' })
 
   job.scene = { brandName: site.name, domain: site.domain, accent: site.accent }
+  job.screenshotUrl = site.screenshots[0] ?? null
 
   /*
    * Paced, not instant. The scrape finishes in one tick, so without this
@@ -308,7 +316,7 @@ async function direct(job: Job, site: Scraped): Promise<void> {
   const plan = job.plan ?? fallbackPlan(site)
 
   for (const [index, shot] of plan.shots.entries()) {
-    await pause(350)
+    await pause(300)
     emit(job, { type: 'frame', index, title: shot.title })
   }
 

@@ -47,7 +47,7 @@
 }
 
 .seq__title {
-  font-size: clamp(30px, 4.6vw, 62px);
+  font-size: clamp(30px, 4.8vw, 68px);
 }
 
 .seq__sub {
