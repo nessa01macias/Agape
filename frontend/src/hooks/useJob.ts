@@ -18,7 +18,8 @@ import {
   type StageId,
 } from '../lib/jobs'
 import { brandFromUrl } from '../lib/brand'
-import type { SceneProps } from '../remotion/Scene'
+import type { LaunchProps } from '../remotion/LaunchTemplate'
+import { DEFAULT_THEME } from '../remotion/theme'
 
 /** Display order for the pipeline UI — the backend may emit out of order. */
 export const STAGES: StageId[] = [
@@ -149,7 +150,7 @@ function applyEvent(state: JobState, event: JobEvent): JobState {
 
 export type UseJob = JobState & {
   /** What the player renders — the guess, refined by live artifacts. */
-  scene: SceneProps
+  scene: LaunchProps
   ready: boolean
 }
 
@@ -189,24 +190,35 @@ export function useJob(url: string): UseJob {
     }
   }, [url])
 
-  const scene = useMemo<SceneProps>(() => {
+  const scene = useMemo<LaunchProps>(() => {
     const guess = brandFromUrl(url)
 
     // First colour the curator finds wins; the rest are supporting shades.
     const accent = state.artifacts.find((a) => a.kind === 'color')?.value
+    const copy = state.artifacts.find((a) => a.kind === 'copy')?.value
 
-    // The writer streams its three lines in render order — eyebrow,
-    // tagline, footer. They land one at a time, so the preview fills in
-    // as they arrive rather than waiting for the whole plan.
-    const [eyebrow, tagline, footer] = state.script
+    // Mock jobs emit a dedicated `screenshot`; the live pipeline's first
+    // `image` artifact is the landing-page shot, URL in `src`.
+    const screenshotUrl =
+      state.artifacts.find((a) => a.kind === 'screenshot')?.value ??
+      state.artifacts.find((a) => a.kind === 'image')?.src
+
+    // The writer streams its lines in render order; the second is the
+    // tagline. They land one at a time, so the preview fills in as they
+    // arrive rather than waiting for the whole plan.
+    const [, taglineLine] = state.script
 
     return {
       brandName: guess.name,
       domain: guess.domain,
-      accent: accent ?? guess.accent,
-      eyebrow: eyebrow ?? 'INTRODUCING',
-      tagline: tagline ?? 'Something big is coming.',
-      footer: footer ?? 'LAUNCHING SOON',
+      headline: 'Your launch deserves better.',
+      tagline: taglineLine ?? copy ?? 'Something big is coming.',
+      cta: 'Get early access',
+      screenshotUrl,
+      theme: {
+        ...DEFAULT_THEME,
+        colors: { ...DEFAULT_THEME.colors, accent: accent ?? guess.accent },
+      },
     }
   }, [url, state.artifacts, state.script])
 

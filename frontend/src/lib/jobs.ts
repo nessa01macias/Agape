@@ -13,7 +13,7 @@ import { brandFromUrl } from './brand'
 export type StageId = 'scout' | 'curator' | 'strategist' | 'writer' | 'director'
 
 export type Artifact = {
-  kind: 'color' | 'logo' | 'font' | 'copy' | 'image'
+  kind: 'color' | 'logo' | 'font' | 'copy' | 'image' | 'screenshot'
   /** Display text — safe to print. */
   value: string
   label: string
@@ -137,12 +137,13 @@ function scriptFor(job: Job): Beat[] {
     [500, { type: 'artifact', artifact: { kind: 'color', value: brand.accent, label: 'accent' } }],
     [350, { type: 'artifact', artifact: { kind: 'logo', value: name.charAt(0).toUpperCase(), label: 'monogram' } }],
     [350, { type: 'artifact', artifact: { kind: 'copy', value: 'Something big is coming.', label: 'tagline' } }],
+    [350, { type: 'artifact', artifact: { kind: 'screenshot', value: '/screenshot-placeholder.svg', label: 'landing page' } }],
     [200, { type: 'progress', value: 0.3 }],
-    [400, { type: 'stage', stage: 'curator', status: 'done', label: '3 artifacts' }],
+    [400, { type: 'stage', stage: 'curator', status: 'done', label: '4 artifacts' }],
     [0, { type: 'stage', stage: 'strategist', status: 'working', label: 'choosing a format' }],
     [900, {
       type: 'decision',
-      format: 'Launch teaser — 7s, 16:9',
+      format: 'Launch teaser — 12s, 16:9',
       reason: `${name} is pre-launch: short and cinematic beats a feature tour nobody can follow yet.`,
     }],
     [200, { type: 'progress', value: 0.45 }],
@@ -154,13 +155,14 @@ function scriptFor(job: Job): Beat[] {
     [200, { type: 'progress', value: 0.62 }],
     [300, { type: 'stage', stage: 'writer', status: 'done', label: '3 lines' }],
     [0, { type: 'stage', stage: 'director', status: 'working', label: 'assembling shots' }],
-    [500, { type: 'frame', index: 0, title: 'phone rises' }],
-    [450, { type: 'frame', index: 1, title: 'title lands' }],
-    [450, { type: 'frame', index: 2, title: 'tagline' }],
-    [450, { type: 'frame', index: 3, title: 'domain pill' }],
+    [500, { type: 'frame', index: 0, title: 'hook headline' }],
+    [400, { type: 'frame', index: 1, title: 'introducing' }],
+    [400, { type: 'frame', index: 2, title: 'laptop reveal' }],
+    [400, { type: 'frame', index: 3, title: 'tagline payoff' }],
+    [400, { type: 'frame', index: 4, title: 'brand lockup' }],
     [200, { type: 'progress', value: 0.92 }],
-    [500, { type: 'log', message: 'composition "main" ready — 210 frames @ 30fps' }],
-    [300, { type: 'stage', stage: 'director', status: 'done', label: '4 shots' }],
+    [500, { type: 'log', message: 'composition "main" ready — 360 frames @ 30fps' }],
+    [300, { type: 'stage', stage: 'director', status: 'done', label: '5 shots' }],
     [200, { type: 'done', projectId: job.id }],
   ]
 }

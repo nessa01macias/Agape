@@ -3,6 +3,12 @@ import type { Vector3 } from "@react-three/fiber";
 // The distance from which the camera is pointing to the phone.
 export const CAMERA_DISTANCE = 2.5;
 
+// The laptop is wider, so the camera sits further back.
+export const LAPTOP_CAMERA_DISTANCE = 3.2;
+
+// 16:10 laptop screen.
+export const LAPTOP_SCREEN_ASPECT = 1.6;
+
 // A small number to avoid z-index flickering
 export const Z_FLICKER_PREVENTION = 0.001;
 
@@ -42,6 +48,78 @@ export type PhoneLayout = {
     bevel: number;
   };
   screen: Layout;
+};
+
+export type LaptopLayout = {
+  lid: Layout & {
+    thickness: number;
+    bevel: number;
+  };
+  screen: Layout;
+  deck: {
+    width: number;
+    depth: number;
+    thickness: number;
+    radius: number;
+  };
+  hinge: {
+    z: number;
+  };
+};
+
+// Mirrors getPhoneLayout's conventions: lid is a rounded slab, screen is
+// inset by the bevel and floated above it, deck lies flat with the hinge
+// at its rear edge.
+export const getLaptopLayout = (
+  aspectRatio: number,
+  baseScale: number,
+  screenRadius: number,
+): LaptopLayout => {
+  const lidThickness = baseScale * 0.035;
+  const lidBevel = baseScale * 0.05;
+
+  const lidHeight = getPhoneHeight(aspectRatio, baseScale);
+  const lidWidth = getPhoneWidth(aspectRatio, baseScale);
+  const lidPosition: Vector3 = [-lidWidth / 2, 0, -lidThickness];
+  const screenWidth = lidWidth - lidBevel * 2;
+  const screenHeight = lidHeight - lidBevel * 2;
+  const screenPosition: Vector3 = [
+    -screenWidth / 2,
+    lidBevel,
+    Z_FLICKER_PREVENTION,
+  ];
+
+  // Same outer-radius formula as the phone.
+  const lidRadius = screenRadius + (lidWidth - screenWidth) / 2;
+
+  const deckDepth = lidHeight * 0.85;
+  const deckThickness = baseScale * 0.055;
+
+  return {
+    lid: {
+      position: lidPosition,
+      height: lidHeight,
+      width: lidWidth,
+      radius: lidRadius,
+      thickness: lidThickness,
+      bevel: lidBevel,
+    },
+    screen: {
+      position: screenPosition,
+      height: screenHeight,
+      width: screenWidth,
+      radius: screenRadius,
+    },
+    deck: {
+      width: lidWidth,
+      depth: deckDepth,
+      thickness: deckThickness,
+      radius: lidRadius,
+    },
+    hinge: {
+      z: deckDepth / 2,
+    },
+  };
 };
 
 export const getPhoneLayout = (

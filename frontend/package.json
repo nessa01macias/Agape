@@ -9,10 +9,11 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "studio": "remotion studio",
-    "render": "remotion render Scene out/launch.mp4"
+    "render": "remotion render Launch out/launch.mp4"
   },
   "dependencies": {
     "@react-three/fiber": "^9.2.0",
+    "@remotion/google-fonts": "^4.0.494",
     "@remotion/player": "4.0.494",
     "@remotion/three": "4.0.494",
     "react": "^19.2.7",

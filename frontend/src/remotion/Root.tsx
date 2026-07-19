@@ -6,25 +6,27 @@ import {
   VIDEO_HEIGHT,
   VIDEO_WIDTH,
 } from "./constants";
-import { Scene, sceneSchema } from "./Scene";
+import { LaunchTemplate, launchSchema } from "./LaunchTemplate";
+import { PRESET_THEMES } from "./theme";
 
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
-      id="Scene"
-      component={Scene}
+      id="Launch"
+      component={LaunchTemplate}
       fps={FPS}
       durationInFrames={DURATION_IN_FRAMES}
       width={VIDEO_WIDTH}
       height={VIDEO_HEIGHT}
-      schema={sceneSchema}
+      schema={launchSchema}
       defaultProps={{
         brandName: "acme",
         domain: "acme.com",
-        accent: "#6C5CE7",
-        eyebrow: "INTRODUCING",
+        headline: "Your launch deserves better.",
         tagline: "Something big is coming.",
-        footer: "LAUNCHING SOON",
+        cta: "Get early access",
+        screenshotUrl: undefined,
+        theme: PRESET_THEMES.neonDark,
       }}
     />
   );

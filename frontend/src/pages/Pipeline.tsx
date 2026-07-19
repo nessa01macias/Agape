@@ -125,7 +125,9 @@ export function Pipeline() {
   return (
     <div
       className={`pipe is-${act}`}
-      style={{ '--accent': job.scene.accent } as React.CSSProperties}
+      style={
+        { '--accent': job.scene.theme.colors.accent } as React.CSSProperties
+      }
     >
       <div className="pipe__bg" aria-hidden="true">
         <span className="pipe__glow pipe__glow--teal" />

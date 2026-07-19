@@ -25,7 +25,7 @@ export type RenderStatus = {
  */
 export async function startRender(
   job: Job,
-  props: { brandName: string; domain: string; accent: string },
+  props: { brandName: string; domain: string } & Record<string, unknown>,
 ): Promise<string> {
   const response = await fetch(`/api/projects/${job.id}/render`, {
     method: 'POST',
