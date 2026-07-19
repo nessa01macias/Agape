@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useReducer } from 'react'
 import {
+  attachToProject,
   createProject,
   subscribeToJob,
   type Artifact,
@@ -155,11 +156,14 @@ export type UseJob = JobState & {
 }
 
 /**
- * Runs the pipeline for `url`. Re-runs only when the url changes; the
- * cleanup cancels both the in-flight POST and the stream, so StrictMode's
- * double-mount in dev doesn't leave a second subscription behind.
+ * Runs the pipeline for `url`, or re-attaches to `jobId` when the caller
+ * already has a run — the editor does this so it shows the cut the
+ * pipeline screen just produced rather than commissioning a second one.
+ *
+ * The cleanup cancels both the in-flight open and the stream, so
+ * StrictMode's double-mount in dev doesn't leave a subscription behind.
  */
-export function useJob(url: string): UseJob {
+export function useJob(url: string, jobId?: string | null): UseJob {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
@@ -168,7 +172,9 @@ export function useJob(url: string): UseJob {
 
     dispatch({ type: 'reset' })
 
-    createProject(url)
+    const open = jobId ? attachToProject(jobId, url) : createProject(url)
+
+    open
       .then((job) => {
         if (cancelled) return
         dispatch({ type: 'started', job })
@@ -188,7 +194,7 @@ export function useJob(url: string): UseJob {
       cancelled = true
       unsubscribe?.()
     }
-  }, [url])
+  }, [url, jobId])
 
   const scene = useMemo<LaunchProps>(() => {
     const guess = brandFromUrl(url)

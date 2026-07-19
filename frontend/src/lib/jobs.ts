@@ -64,6 +64,30 @@ export async function createProject(url: string): Promise<Job> {
   }
 }
 
+/**
+ * Re-attaches to a job the pipeline already ran, instead of starting a
+ * second one. Without this the editor re-scrapes and re-plans from
+ * scratch, which burns a second Firecrawl credit and a second model call
+ * — and lands the user on different copy than the one they just watched
+ * being written.
+ *
+ * Falls back to a fresh job when the id is stale: a shared link, a
+ * reload after the server restarted, or an in-memory job that's gone.
+ */
+export async function attachToProject(jobId: string, url: string): Promise<Job> {
+  try {
+    // 404 means no such job. Anything else — 200 planned, 409 still
+    // planning — means it's there and the stream will replay it.
+    const response = await fetch(`/api/projects/${jobId}/plan`)
+    if (response.status !== 404) return { id: jobId, url, source: 'live' }
+    console.info('[agape] job %s is gone, starting a new one', jobId)
+  } catch {
+    /* backend unreachable — createProject handles the mock fallback */
+  }
+
+  return createProject(url)
+}
+
 export function setProjectFormat(job: Job, format: string): Promise<void> {
   if (job.source === 'mock') return Promise.resolve()
 

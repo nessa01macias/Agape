@@ -260,7 +260,13 @@ export function Pipeline() {
                     type="button"
                     className="btn btn--primary btn--lg"
                     onClick={() =>
-                      navigate(`/editor?url=${encodeURIComponent(url)}`)
+                      navigate(
+                        // Carry the job forward so the editor re-attaches
+                        // instead of re-running the whole pipeline. `url`
+                        // rides along so a stale link still works.
+                        `/editor?url=${encodeURIComponent(url)}` +
+                          (job.job ? `&job=${encodeURIComponent(job.job.id)}` : ''),
+                      )
                     }
                   >
                     Open the editor

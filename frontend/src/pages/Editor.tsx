@@ -141,7 +141,12 @@ const clipDur = (clip: Clip) => tcLong(clip.to - clip.from).slice(3)
 
 export function Editor() {
   const [params] = useSearchParams()
-  return <EditorView url={params.get('url') ?? DEFAULT_URL} />
+  return (
+    <EditorView
+      url={params.get('url') ?? DEFAULT_URL}
+      jobId={params.get('job')}
+    />
+  )
 }
 
 /**
@@ -198,8 +203,8 @@ function RenderButton({
   )
 }
 
-function EditorView({ url }: { url: string }) {
-  const job = useJob(url)
+function EditorView({ url, jobId }: { url: string; jobId: string | null }) {
+  const job = useJob(url, jobId)
 
   // Inspector edits win over whatever the pipeline guessed.
   const [overrides, setOverrides] = useState<Partial<LaunchProps>>({})
