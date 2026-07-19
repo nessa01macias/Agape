@@ -258,7 +258,11 @@ section[id],
 
 .is-revealed .words__w {
   opacity: 1;
-  filter: blur(0);
+  /* `none`, not `blur(0)`. A zero-radius filter is still a filter, so the
+     word paints in its own context — out of reach of the gradient that
+     `.bloom` clips to the text. The glyphs then keep their inherited
+     `color: transparent` and the headline renders blank. */
+  filter: none;
   transform: none;
 }
 
