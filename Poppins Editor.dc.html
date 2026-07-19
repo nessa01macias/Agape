@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#090909;}
+  a{color:#9FBEC3;text-decoration:none;} a:hover{color:#FFFFFF;}
+  ::selection{background:rgba(37,69,74,.6);}
+</style>
+</helmet>
+<div data-screen-label="Editor" style="font-family:'Poppins',sans-serif; width:100vw; height:100vh; display:flex; flex-direction:column; color:#FFFFFF; background:linear-gradient(180deg,#090909 0%,#0C1A1D 45%,#25454A 130%); overflow:hidden; box-sizing:border-box;">
+
+  <!-- Top menu bar -->
+  <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; flex:none;">
+    <div style="width:30px; height:30px; border-radius:50%; background:#25454A; border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; margin-right:6px;">
+      <div style="width:0; height:0; border-left:9px solid #FFFFFF; border-top:5.5px solid transparent; border-bottom:5.5px solid transparent; margin-left:2px;"></div>
+    </div>
+    <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="5">
+      <div style="padding:6px 14px; border-radius:999px; font-size:13px; font-weight:400; color:rgba(255,255,255,.85); cursor:default;" style-hover="background:rgba(255,255,255,.07); color:#FFFFFF;">{{ m }}</div>
+    </sc-for>
+    <div style="flex:1; text-align:center; font-size:13px; color:rgba(255,255,255,.55); font-weight:300;">untitled-project <span style="color:rgba(255,255,255,.3);">/</span> <span style="color:#FFFFFF; font-weight:500;">composition</span></div>
+    <div style="display:flex; gap:8px;">
+      <div style="padding:6px 18px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); font-size:13px; color:rgba(255,255,255,.85); cursor:default;" style-hover="background:rgba(255,255,255,.09);">Share</div>
+      <div style="padding:6px 18px; border-radius:999px; background:#FFFFFF; color:#090909; font-size:13px; font-weight:600; cursor:default;" style-hover="background:rgba(255,255,255,.85);">Render</div>
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div style="flex:1; display:flex; gap:12px; padding:0 12px; min-height:0;">
+
+    <!-- Left sidebar -->
+    <div style="width:250px; flex:none; display:flex; flex-direction:column; border-radius:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); backdrop-filter:blur(12px); overflow:hidden;">
+      <div style="display:flex; gap:6px; padding:12px 12px 0 12px;">
+        <div style="flex:1; text-align:center; padding:7px 0; border-radius:999px; background:#25454A; color:#FFFFFF; font-size:12.5px; font-weight:500;">Compositions</div>
+        <div style="flex:1; text-align:center; padding:7px 0; border-radius:999px; color:rgba(255,255,255,.55); font-size:12.5px; font-weight:400; cursor:default;" style-hover="background:rgba(255,255,255,.06); color:#FFFFFF;">Assets</div>
+      </div>
+      <div style="flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:4px; padding:14px 12px;">
+        <sc-for list="{{ comps }}" as="c" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:999px; cursor:default; background: {{ c.bg }};" style-hover="background:rgba(255,255,255,.07);">
+            <div style="width:8px; height:8px; border-radius:50%; flex:none; background: {{ c.dot }};"></div>
+            <span style="font-size:13px; font-weight: {{ c.weight }}; color: {{ c.fg }};">{{ c.name }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:10px; align-self:center; padding:6px 18px; border-radius:999px; border:1px solid rgba(255,255,255,.18); color:rgba(255,255,255,.7); font-size:12px; cursor:default;" style-hover="background:rgba(255,255,255,.08); color:#FFFFFF;">+ New</div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div style="flex:1; display:flex; flex-direction:column; min-width:0; gap:12px;">
+      <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+      <div style="aspect-ratio:16/9; max-width:100%; max-height:100%; width:auto; height:100%; border-radius:20px; background:rgba(9,9,9,.5); border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; box-sizing:border-box;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:clamp(6px, 2vh, 16px); max-height:100%; overflow:hidden; padding:8px;">
+          <div style="width:clamp(36px, 10vh, 72px); height:clamp(36px, 10vh, 72px); flex:none; border-radius:50%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;" style-hover="background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.3);">
+            <div style="width:0; height:0; border-left:clamp(10px, 2.8vh, 20px) solid rgba(255,255,255,.7); border-top:clamp(6px, 1.7vh, 12px) solid transparent; border-bottom:clamp(6px, 1.7vh, 12px) solid transparent; margin-left:4px;"></div>
+          </div>
+          <div style="font-size:clamp(11px, 1.8vh, 13px); color:rgba(255,255,255,.4); font-weight:300; white-space:nowrap;">Select a composition to preview</div>
+        </div>
+        <div style="position:absolute; left:16px; top:14px; font-size:11px; letter-spacing:.06em; color:rgba(255,255,255,.35); font-weight:400;">PREVIEW</div>
+
+      </div>
+      </div>
+
+      <!-- Transport -->
+      <div style="flex:none; display:flex; align-items:center; justify-content:center; gap:clamp(4px, 1vw, 14px); padding:2px 0; align-self:center; max-width:100%; overflow:hidden;">
+        <div style="font-size:16px; font-weight:500; color:#FFFFFF; font-variant-numeric:tabular-nums; letter-spacing:.02em; margin-right:6px;">00:00<span style="color:rgba(255,255,255,.4);">.00</span></div>
+        <sc-for list="{{ transport }}" as="t" hint-placeholder-count="4">
+          <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:default; color: {{ t.fg }}; background: {{ t.bg }}; border:1px solid {{ t.border }};" style-hover="opacity:.85;">{{ t.icon }}</div>
+        </sc-for>
+        <div style="width:1px; height:22px; background:rgba(255,255,255,.12); margin:0 4px;"></div>
+        <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; color:rgba(255,255,255,.55);" style-hover="background:rgba(255,255,255,.12);">⟳</div>
+        <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.55);" style-hover="background:rgba(255,255,255,.12);">
+          <div style="display:flex; align-items:center; gap:2px;">
+            <div style="width:0; height:0; border-right:7px solid rgba(255,255,255,.55); border-top:5px solid transparent; border-bottom:5px solid transparent;"></div>
+            <div style="width:5px; height:9px; border:1.5px solid rgba(255,255,255,.55); border-left:none; border-radius:0 6px 6px 0;"></div>
+          </div>
+        </div>
+        <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; color:rgba(255,255,255,.55);" style-hover="background:rgba(255,255,255,.12);">⛶</div>
+      </div>
+    </div>
+
+    <!-- Inspector -->
+    <div style="width:250px; flex:none; display:flex; flex-direction:column; border-radius:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); backdrop-filter:blur(12px); overflow:hidden;">
+      <div style="display:flex; gap:6px; padding:12px 12px 0 12px;">
+        <div style="flex:1; text-align:center; padding:7px 0; border-radius:999px; background:#25454A; color:#FFFFFF; font-size:12.5px; font-weight:500;">Inspector</div>
+        <div style="flex:1; text-align:center; padding:7px 0; border-radius:999px; color:rgba(255,255,255,.55); font-size:12.5px; font-weight:400; cursor:default;" style-hover="background:rgba(255,255,255,.06); color:#FFFFFF;">Renders</div>
+      </div>
+      <div style="flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:2px; padding:16px 14px;">
+        <div style="font-size:14px; font-weight:600; color:#FFFFFF; padding:0 8px 10px 8px;">main</div>
+        <sc-for list="{{ inspectorProps }}" as="p" hint-placeholder-count="4">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 8px; border-bottom:1px solid rgba(255,255,255,.06);">
+            <span style="font-size:12px; color:rgba(255,255,255,.45); font-weight:300;">{{ p.k }}</span>
+            <span style="font-size:12px; color:#FFFFFF; font-weight:400; font-variant-numeric:tabular-nums;">{{ p.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div style="flex:none; height:clamp(230px, 42vh, 420px); margin:12px; border-radius:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); backdrop-filter:blur(12px); display:flex; flex-direction:column; overflow:hidden;">
+    <div style="display:flex; align-items:center; gap:14px; padding:9px 18px; border-bottom:1px solid rgba(255,255,255,.07); flex:none;">
+      <div style="display:flex; align-items:baseline; gap:8px;">
+        <div style="font-size:16px; font-weight:600; color:#FFFFFF; font-variant-numeric:tabular-nums; letter-spacing:.03em;">00:01:12:08</div>
+        <div style="font-size:11px; color:rgba(255,255,255,.35); font-variant-numeric:tabular-nums;">/ 00:00:05:00</div>
+      </div>
+      <div style="width:1px; height:20px; background:rgba(255,255,255,.1);"></div>
+      <div style="display:flex; gap:3px;">
+        <sc-for list="{{ tools }}" as="tool" hint-placeholder-count="6">
+          <div style="width:29px; height:29px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; cursor:default; color: {{ tool.fg }}; background: {{ tool.bg }};" style-hover="background:rgba(255,255,255,.1);"><i class="{{ tool.icon }}"></i></div>
+        </sc-for>
+      </div>
+      <div style="width:1px; height:20px; background:rgba(255,255,255,.1);"></div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:rgba(255,255,255,.45);">
+        <span style="font-variant-numeric:tabular-nums;">IN 00:00:00:12</span>
+        <span style="color:rgba(255,255,255,.2);">·</span>
+        <span style="font-variant-numeric:tabular-nums;">OUT 00:00:04:16</span>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; color:rgba(255,255,255,.55); cursor:default;" style-hover="background:rgba(255,255,255,.08);"><i class="iconoir-search"></i></div>
+        <div style="width:90px; height:3px; border-radius:999px; background:rgba(255,255,255,.15); position:relative;"><div style="position:absolute; left:55%; top:-4px; width:11px; height:11px; border-radius:50%; background:#FFFFFF;"></div></div>
+        <div style="width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; color:rgba(255,255,255,.55); cursor:default;" style-hover="background:rgba(255,255,255,.08);">+</div>
+        <div style="width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; color:rgba(255,255,255,.55); cursor:default;" style-hover="background:rgba(255,255,255,.08);"><i class="iconoir-more-horiz"></i></div>
+      </div>
+    </div>
+    <div style="flex:1; min-height:0; position:relative; display:flex; flex-direction:column;">
+      <div style="display:flex; flex:none; height:34px; border-bottom:1px solid rgba(255,255,255,.09);">
+        <div style="width:170px; flex:none; border-right:1px solid rgba(255,255,255,.08);"></div>
+        <div style="flex:1; position:relative;">
+          <div style="position:absolute; left:0; right:0; bottom:0; height:7px; background:repeating-linear-gradient(90deg, rgba(255,255,255,.14) 0px, rgba(255,255,255,.14) 1px, transparent 1px, transparent 11px);"></div>
+          <div style="position:absolute; inset:0; display:flex;">
+            <sc-for list="{{ ticks }}" as="tk" hint-placeholder-count="5">
+              <div style="flex:1; font-size:10.5px; color:rgba(255,255,255,.5); padding:6px 0 0 8px; border-left:1px solid rgba(255,255,255,.25); font-variant-numeric:tabular-nums; box-sizing:border-box;">{{ tk }}</div>
+            </sc-for>
+          </div>
+          <div style="position:absolute; left:22%; top:16px; width:7px; height:7px; transform:rotate(45deg); border-radius:1.5px; background:rgba(255,255,255,.5);"></div>
+          <div style="position:absolute; left:58%; top:16px; width:7px; height:7px; transform:rotate(45deg); border-radius:1.5px; background:rgba(255,255,255,.5);"></div>
+        </div>
+      </div>
+      <div style="flex:1; min-height:0; overflow:auto;">
+        <sc-for list="{{ videoTracks }}" as="tr" hint-placeholder-count="3">
+          <div style="display:flex; flex:none; height: {{ tr.h }}; border-bottom:1px solid rgba(255,255,255,.06);">
+            <div style="width:170px; flex:none; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px 0 18px; box-sizing:border-box; border-right:1px solid rgba(255,255,255,.08);">
+              <div>
+                <div style="font-size:13px; font-weight:600; color:#FFFFFF; line-height:1.2;">{{ tr.label }}</div>
+                <div style="font-size:9.5px; color:rgba(255,255,255,.4); font-weight:300; line-height:1.2;">{{ tr.sub }}</div>
+              </div>
+              <div style="display:flex; gap:4px; padding:3px; border-radius:8px; background:rgba(255,255,255,.04);">
+                <sc-for list="{{ tr.toggles }}" as="tg" hint-placeholder-count="3">
+                  <div style="width:18px; height:18px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:500; cursor:default; color: {{ tg.fg }}; background: {{ tg.bg }};" style-hover="background:rgba(255,255,255,.1);"><i class="{{ tg.icon }}" style="font-size:11px;"></i>{{ tg.t }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex:1; position:relative;">
+              <sc-for list="{{ tr.clips }}" as="cl" hint-placeholder-count="1">
+                <div style="position:absolute; top:7px; bottom:7px; border-radius:8px; overflow:hidden; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px; left: {{ cl.left }}; width: {{ cl.width }}; background: {{ cl.bg }}; border: {{ cl.borderStyle }};" style-hover="filter:brightness(1.18);">
+                  <span style="font-size:11px; font-weight:500; color:rgba(255,255,255,.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cl.name }}</span>
+                  <span style="font-size:9.5px; color:rgba(255,255,255,.45); font-variant-numeric:tabular-nums; white-space:nowrap;">{{ cl.dur }}</span>
+                </div>
+              </sc-for>
+              <sc-for list="{{ tr.transitions }}" as="tx" hint-placeholder-count="0">
+                <div style="position:absolute; top:50%; margin-top:-6px; width:12px; height:12px; transform:rotate(45deg); border-radius:2px; background:#FFFFFF; box-shadow:0 0 0 3px rgba(9,14,16,.7); z-index:2; left: {{ tx.left }};"></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="display:flex; flex:none; height:10px; border-bottom:1px solid rgba(255,255,255,.12);">
+          <div style="width:170px; flex:none; border-right:1px solid rgba(255,255,255,.08);"></div>
+        </div>
+        <sc-for list="{{ audioTracks }}" as="tr" hint-placeholder-count="2">
+          <div style="display:flex; flex:none; height: {{ tr.h }}; border-bottom:1px solid rgba(255,255,255,.06);">
+            <div style="width:170px; flex:none; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px 0 18px; box-sizing:border-box; border-right:1px solid rgba(255,255,255,.08);">
+              <div>
+                <div style="font-size:13px; font-weight:600; color:#FFFFFF; line-height:1.2;">{{ tr.label }}</div>
+                <div style="font-size:9.5px; color:rgba(255,255,255,.4); font-weight:300; line-height:1.2;">{{ tr.sub }}</div>
+              </div>
+              <div style="display:flex; gap:4px; padding:3px; border-radius:8px; background:rgba(255,255,255,.04);">
+                <sc-for list="{{ tr.toggles }}" as="tg" hint-placeholder-count="3">
+                  <div style="width:18px; height:18px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:500; cursor:default; color: {{ tg.fg }}; background: {{ tg.bg }};" style-hover="background:rgba(255,255,255,.1);"><i class="{{ tg.icon }}" style="font-size:11px;"></i>{{ tg.t }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex:1; position:relative;">
+              <sc-for list="{{ tr.clips }}" as="cl" hint-placeholder-count="1">
+                <div style="position:absolute; top:7px; bottom:7px; border-radius:8px; overflow:hidden; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 12px; left: {{ cl.left }}; width: {{ cl.width }}; background: {{ cl.bg }}; border: {{ cl.borderStyle }};" style-hover="filter:brightness(1.18);">
+                  <span style="font-size:11px; font-weight:500; color:rgba(255,255,255,.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cl.name }}</span>
+                  <span style="font-size:9.5px; color:rgba(255,255,255,.45); font-variant-numeric:tabular-nums; white-space:nowrap;">{{ cl.dur }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="display:flex; min-height:30px;">
+          <div style="width:170px; flex:none; border-right:1px solid rgba(255,255,255,.08);"></div>
+        </div>
+      </div>
+      <div style="position:absolute; top:0; bottom:6px; width:1.5px; background:#FFFFFF; border-radius:2px; z-index:3; left:calc(170px + (100% - 170px) * 0.36);">
+        <div style="position:absolute; top:-1px; left:50%; transform:translateX(-50%); padding:1px 7px; border-radius:999px; background:#FFFFFF; color:#090909; font-size:9.5px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap;">00:01:12</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#FFFFFF';
+    const compact = this.props.compactTimeline ?? false;
+    const wave = (n, seed) => Array.from({ length: n }, (_, i) => `${Math.round(Math.abs(Math.sin(i * 0.83 + seed) * Math.cos(i * 0.31)) * 75 + 18)}%`);
+    const videoClip = (name, left, width, dur, bg) => ({ name, left, width, dur, bg, borderStyle: '1px solid rgba(255,255,255,.14)' });
+    const audioClip = (name, left, width, dur, w) => ({ name, left, width, dur, wave: w, bg: 'rgba(37,69,74,.55)', borderStyle: '1px solid rgba(255,255,255,.10)' });
+    const tg = (t, on, icon) => ({ t, icon: icon || '', fg: on ? '#FFFFFF' : 'rgba(255,255,255,.5)', bg: on ? '#25454A' : 'transparent' });
+    const vidToggles = () => [tg('', false, 'iconoir-eye'), tg('', false, 'iconoir-lock'), tg('', false, 'iconoir-more-horiz')];
+    const audToggles = (muted) => [tg('M', muted), tg('S', false), tg('', false, 'iconoir-more-horiz')];
+    return {
+      menuItems: ['File', 'View', 'Composition', 'Tools', 'Help'],
+      transport: [
+        { icon: '⏮', bg: 'transparent', border: 'transparent', fg: 'rgba(255,255,255,.8)' },
+        { icon: '◂', bg: 'transparent', border: 'transparent', fg: 'rgba(255,255,255,.8)' },
+        { icon: '▶', bg: accent, border: accent, fg: '#090909' },
+        { icon: '⏭', bg: 'transparent', border: 'transparent', fg: 'rgba(255,255,255,.8)' },
+      ],
+      ticks: ['00:00', '00:01', '00:02', '00:03', '00:04'],
+      comps: [
+        { name: 'main', bg: '#25454A', dot: '#FFFFFF', fg: '#FFFFFF', weight: 500 },
+        { name: 'intro', bg: 'transparent', dot: 'rgba(255,255,255,.25)', fg: 'rgba(255,255,255,.65)', weight: 400 },
+        { name: 'outro', bg: 'transparent', dot: 'rgba(255,255,255,.25)', fg: 'rgba(255,255,255,.65)', weight: 400 },
+      ],
+      inspectorProps: [
+        { k: 'Resolution', v: '1920 × 1080' },
+        { k: 'Frame rate', v: '30 fps' },
+        { k: 'Duration', v: '00:05.00' },
+        { k: 'Layers', v: '3' },
+      ],
+      tools: [
+        { icon: 'iconoir-cursor-pointer', bg: '#FFFFFF', fg: '#090909' },
+        { icon: 'iconoir-arrow-separate', bg: 'transparent', fg: 'rgba(255,255,255,.55)' },
+        { icon: 'iconoir-cut', bg: 'transparent', fg: 'rgba(255,255,255,.55)' },
+        { icon: 'iconoir-text', bg: 'transparent', fg: 'rgba(255,255,255,.55)' },
+      ],
+      videoTracks: [
+        { label: 'V3', sub: 'Video 3', h: '52px', toggles: vidToggles(), transitions: [], clips: [
+          videoClip('lower-third', '40%', '16%', '00:00:42', 'rgba(59,98,105,.45)'),
+        ] },
+        { label: 'V2', sub: 'Video 2', h: '52px', toggles: vidToggles(), transitions: [], clips: [
+          videoClip('title', '12%', '18%', '00:01:00', 'rgba(59,98,105,.45)'),
+          videoClip('logo', '70%', '12%', '00:00:30', 'rgba(59,98,105,.45)'),
+        ] },
+        { label: 'V1', sub: 'Video 1', h: '52px', toggles: vidToggles(), transitions: [{ left: 'calc(27.5% - 6px)' }, { left: 'calc(65% - 6px)' }], clips: [
+          videoClip('intro.mp4', '1.5%', '26%', '00:01:12', '#25454A'),
+          Object.assign(videoClip('main_scene.mp4', '27.5%', '37.5%', '00:01:55', '#2C525A'), { borderStyle: '1.5px solid rgba(255,255,255,.9)' }),
+          videoClip('outro.mp4', '65%', '23.5%', '00:01:03', '#25454A'),
+        ] },
+      ],
+      audioTracks: [
+        { label: 'A1', sub: 'Audio 1', h: '52px', toggles: audToggles(false), clips: [
+          audioClip('soundtrack.wav', '1.5%', '87%', '00:04:12', wave(90, 1)),
+        ] },
+        { label: 'A2', sub: 'Audio 2', h: '52px', toggles: audToggles(true), clips: [
+          audioClip('vo_take3.wav', '27.5%', '33%', '00:01:30', wave(34, 4)),
+        ] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
