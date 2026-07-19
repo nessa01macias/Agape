@@ -1,0 +1,41 @@
+{
+  "name": "agape",
+  "version": "1.0.0",
+  "description": "AI Video Editor",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@react-three/fiber": "9.2.0",
+    "@remotion/cli": "4.0.494",
+    "@remotion/player": "4.0.494",
+    "@remotion/three": "4.0.494",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-router-dom": "7.6.2",
+    "remotion": "4.0.494",
+    "three": "0.178.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "0.170.0",
+    "@types/web": "0.0.166",
+    "@vitejs/plugin-react": "4.5.2",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "vite": "6.3.5"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "studio": "remotion studio",
+    "render": "remotion render Scene out/launch.mp4",
+    "lint": "tsc"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.25.12": true
+  }
+}
