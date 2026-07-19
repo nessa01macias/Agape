@@ -1,0 +1,38 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "--directory",
+        "backend",
+        "uvicorn",
+        "agape.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "poc",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "poc", "run", "dev", "--", "--port", "5174"],
+      "port": 5174
+    },
+    {
+      "name": "poc-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "poc", "run", "studio"],
+      "port": 3000
+    }
+  ]
+}
