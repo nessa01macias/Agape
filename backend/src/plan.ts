@@ -31,11 +31,11 @@ const TOTAL_FRAMES = 360
  * each rather than choosing durations. Ids mirror `SHOTS` in constants.ts.
  */
 const SHOT_BRIEFS = [
-  ['hook', 'Opens cold on a single provocative line. No brand yet.'],
-  ['intro', 'The brand name lands.'],
-  ['product', 'Their actual product, shown on screen.'],
-  ['payoff', 'The promise, stated plainly.'],
-  ['lockup', 'Brand, domain, and the call to action.'],
+  ['hook', 'Opens cold on a single provocative line. No brand yet.', 'Cold open'],
+  ['intro', 'The brand name lands.', 'Brand reveal'],
+  ['product', 'Their actual product, shown on screen.', 'Product shot'],
+  ['payoff', 'The promise, stated plainly.', 'The payoff'],
+  ['lockup', 'Brand, domain, and the call to action.', 'Lockup'],
 ] as const
 
 /** Each shot costs input tokens; the landing page carries most of the signal. */
@@ -268,9 +268,9 @@ function coerce(raw: unknown, site: Scraped): VideoPlan | null {
   }
   if (!byId.size) return null
 
-  const shots: Shot[] = SHOT_BRIEFS.map(([id, brief]) => ({
+  const shots: Shot[] = SHOT_BRIEFS.map(([id, , label]) => ({
     id,
-    title: byId.get(id) ?? brief,
+    title: byId.get(id) ?? label,
   }))
 
   const chosen =
@@ -308,7 +308,7 @@ export function fallbackPlan(site: Scraped): VideoPlan {
     accent: legibleAccent(site.accent),
     titles,
     script: [titles.headline, titles.tagline, titles.cta],
-    shots: SHOT_BRIEFS.map(([id, brief]) => ({ id, title: brief })),
+    shots: SHOT_BRIEFS.map(([id, , label]) => ({ id, title: label })),
     fromModel: false,
   }
 }
