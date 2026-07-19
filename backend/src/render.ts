@@ -19,7 +19,15 @@ import { z } from 'zod'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 const ENTRY = path.resolve(here, '../../frontend/src/remotion/index.ts')
-export const OUT_DIR = path.resolve(here, '../out')
+
+/*
+ * Overridable because a container's filesystem is memory-backed on Cloud
+ * Run — writing MP4s into the image eats the instance's RAM. In
+ * production this points at /tmp; locally it stays backend/out.
+ */
+export const OUT_DIR = process.env.AGAPE_OUT_DIR
+  ? path.resolve(process.env.AGAPE_OUT_DIR)
+  : path.resolve(here, '../out')
 
 /**
  * Loose mirror of `launchSchema` in frontend/src/remotion/LaunchTemplate.tsx.

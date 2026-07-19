@@ -15,6 +15,9 @@
    --------------------------------------------------------------- */
 
 import { randomUUID } from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import { createJob, getJob, setFormat, subscribe } from './pipeline.ts'
 import { getBundle, getRender, sceneProps, startRender } from './render.ts'
@@ -177,6 +180,52 @@ app.get('/api/renders/:id/file', (req, res) => {
   }
   res.download(job.file, 'launch.mp4')
 })
+
+/* ---------------------------------------------------------------
+   The built frontend, served from the same origin
+   ---------------------------------------------------------------
+   One service instead of two: the SPA is served here, so `/api/...`
+   is same-origin in production exactly as it is behind Vite's dev
+   proxy. No CORS, no second deploy, no API base URL to configure.
+
+   Only active when a build is present — in development Vite serves
+   the app on :5173 and proxies here, so this stays out of the way.
+   --------------------------------------------------------------- */
+
+const DIST = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../frontend/dist',
+)
+
+if (fs.existsSync(DIST)) {
+  // Hashed assets are immutable; index.html must never be cached or the
+  // next deploy keeps serving the old bundle's script tags.
+  app.use(
+    express.static(DIST, {
+      index: false,
+      setHeaders: (res, filePath) => {
+        res.setHeader(
+          'cache-control',
+          filePath.endsWith('.html')
+            ? 'no-cache'
+            : 'public, max-age=31536000, immutable',
+        )
+      },
+    }),
+  )
+
+  // Client-side routing: /pipeline and /editor are real URLs to the user
+  // but not files on disk, so anything that isn't an API call or an asset
+  // gets the shell. Deliberately not a wildcard route — Express 5 parses
+  // those differently — and it never shadows /api or /health.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    if (req.path.startsWith('/api/') || req.path === '/health') return next()
+    res.sendFile(path.join(DIST, 'index.html'))
+  })
+
+  console.log(`[agape] serving the frontend from ${DIST}`)
+}
 
 app.listen(PORT, () => {
   console.log(`[agape] http://127.0.0.1:${PORT}`)

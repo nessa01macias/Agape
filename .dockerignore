@@ -1,0 +1,27 @@
+# Keep the build context small and the image reproducible. Anything the
+# image needs is installed or built inside it.
+
+**/node_modules
+**/dist
+**/out
+**/.venv
+**/__pycache__
+
+.git
+.gitignore
+.claude
+
+# Secrets never belong in an image — Cloud Run injects them as env vars.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local-only noise
+poc
+**/.DS_Store
+**/*.log
+**/.pytest_cache
+Dockerfile
+.dockerignore
+README.md
+**/README.md
