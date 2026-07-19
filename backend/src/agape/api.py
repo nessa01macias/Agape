@@ -16,7 +16,7 @@ async def get_templates() -> list[Template]:
 @router.post("/scrape")
 async def scrape_url(req: ScrapeRequest) -> ScrapedContent:
     try:
-        return await scrape(req.url, full=req.full)
+        return await scrape(req.url, full=req.full, screenshots=req.screenshots)
     except ScrapeError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 

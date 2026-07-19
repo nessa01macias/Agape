@@ -9,7 +9,15 @@ def _truncate(text: str, max_chars: int | None) -> str:
 
 def apply_template(scraped: ScrapedContent, template: Template) -> FilledTemplate:
     hero_image = scraped.hero_image or (scraped.images[0] if scraped.images else None)
-    remaining_images = [img for img in scraped.images if img != hero_image]
+
+    # Screenshots backfill the image slots. A page with few usable <img> tags
+    # still has a rendered look worth showing, and it beats an empty slot.
+    candidates = list(scraped.images) + [
+        shot for shot in scraped.screenshots if shot not in scraped.images
+    ]
+    if hero_image is None and candidates:
+        hero_image = candidates[0]
+    remaining_images = [img for img in candidates if img != hero_image]
     text_blocks = list(scraped.text_blocks)
 
     warnings: list[str] = []

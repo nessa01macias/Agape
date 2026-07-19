@@ -1,0 +1,705 @@
+/* ---------------------------------------------------------------
+   Agape — pipeline screen
+   ---------------------------------------------------------------
+   Two speeds, two colours, and that's the whole rulebook:
+
+     ambient  teal, 14–18s, never stops   (glows, grid)
+     event    lime, under 500ms           (scan, clips, chips, ticks)
+
+   Nothing moves at a speed in between, which is what keeps a screen
+   this busy from reading as a dashboard. Everything else is still
+   until the stream gives it a reason to move.
+   --------------------------------------------------------------- */
+
+.pipe {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+/* backdrop — same language as the hero, slower ------------------ */
+
+.pipe__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.pipe__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+.pipe__glow--teal {
+  width: min(1200px, 140vw);
+  height: 680px;
+  left: 50%;
+  bottom: -320px;
+  transform: translateX(-50%);
+  background: var(--glow-teal);
+  animation: hero-breathe 16s ease-in-out infinite;
+}
+
+.pipe__glow--lime {
+  width: min(620px, 80vw);
+  height: 380px;
+  left: 50%;
+  top: -8%;
+  transform: translateX(-50%);
+  background: var(--glow-lime);
+  animation: hero-breathe 20s ease-in-out infinite reverse;
+}
+
+.pipe__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 68px 68px;
+  mask-image: radial-gradient(
+    ellipse 75% 65% at 50% 35%,
+    #000 20%,
+    transparent 80%
+  );
+}
+
+/* progress — only ever moves when something real finished -------- */
+
+.pipe__rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pipe__rail::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: calc(var(--p, 0) * 100%);
+  background: linear-gradient(90deg, var(--teal), var(--lime));
+  box-shadow: 0 0 14px rgba(169, 255, 103, 0.55);
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* header -------------------------------------------------------- */
+
+.pipe__top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding: 26px var(--gutter) 20px;
+}
+
+.pipe__host {
+  padding: 5px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.pipe__format {
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: rgba(169, 255, 103, 0.12);
+  color: var(--lime);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.pipe__clock {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* main grid ----------------------------------------------------- */
+
+.pipe__grid-main {
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 28px;
+  align-items: start;
+}
+
+.pipe__window {
+  min-width: 0;
+}
+
+.pipe__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  min-height: min(56vh, 440px);
+}
+
+/* ACT I — their site, being read --------------------------------- */
+
+.site {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 22px;
+  height: calc(100% - 150px);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site__block {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  animation: site-read 2.6s ease-in-out infinite;
+}
+
+.site__block--bar {
+  height: 14px;
+  width: 45%;
+}
+
+.site__block--hero {
+  flex: 1;
+  min-height: 54px;
+}
+
+.site__row {
+  display: flex;
+  gap: 10px;
+  height: 46px;
+}
+
+.site__row .site__block {
+  flex: 1;
+}
+
+.site__block--wide {
+  height: 12px;
+  width: 70%;
+}
+
+.site__block--foot {
+  height: 18px;
+}
+
+/* Staggered so the page reads top-to-bottom, like a crawler would. */
+.site__block:nth-child(1) {
+  animation-delay: 0ms;
+}
+.site__block:nth-child(2) {
+  animation-delay: 180ms;
+}
+.site__block:nth-child(3) {
+  animation-delay: 360ms;
+}
+.site__block:nth-child(4) {
+  animation-delay: 540ms;
+}
+.site__block:nth-child(5) {
+  animation-delay: 720ms;
+}
+
+@keyframes site-read {
+  0%,
+  100% {
+    background: rgba(255, 255, 255, 0.07);
+  }
+  45% {
+    background: rgba(169, 255, 103, 0.2);
+  }
+}
+
+.site__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--lime), transparent);
+  box-shadow: 0 0 22px 5px rgba(169, 255, 103, 0.3);
+  animation: site-scan 2.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes site-scan {
+  0% {
+    top: -2px;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* ACT II — the turn. Their site collapses into clips. */
+
+.site.is-falling {
+  pointer-events: none;
+  animation: site-dissolve 800ms ease forwards;
+}
+
+.site.is-falling .site__scan {
+  opacity: 0;
+}
+
+.site.is-falling .site__block {
+  animation: site-fall 720ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+.site.is-falling .site__block:nth-child(1) {
+  animation-delay: 0ms;
+}
+.site.is-falling .site__block:nth-child(2) {
+  animation-delay: 70ms;
+}
+.site.is-falling .site__block:nth-child(3) {
+  animation-delay: 140ms;
+}
+.site.is-falling .site__block:nth-child(4) {
+  animation-delay: 210ms;
+}
+.site.is-falling .site__block:nth-child(5) {
+  animation-delay: 280ms;
+}
+
+@keyframes site-fall {
+  to {
+    transform: translateY(240px) rotate(-3deg);
+    opacity: 0;
+  }
+}
+
+@keyframes site-dissolve {
+  to {
+    opacity: 0;
+    border-color: transparent;
+  }
+}
+
+/* ACT III — the shots, as they're storyboarded ------------------- */
+
+.board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.board__shot {
+  margin: 0;
+  flex: 1 1 140px;
+  max-width: 200px;
+  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The discovered accent — the same colour the render will use. */
+.board__thumb {
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 62% 38%,
+      color-mix(in srgb, var(--accent, #6c5ce7) 55%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(150deg, #131a1c, #0b0e10);
+}
+
+.board__shot figcaption {
+  margin-top: 9px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+/* the script, becoming captions ---------------------------------- */
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.lines__row {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(9, 9, 9, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white);
+  animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* timeline ------------------------------------------------------- */
+
+.pipe__timeline {
+  margin-top: auto;
+}
+
+.pipe__timeline .clip {
+  transform-origin: left center;
+  animation: clip-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes clip-in {
+  from {
+    transform: scaleX(0.15);
+    opacity: 0;
+  }
+}
+
+.pipe__empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.pipe__timeline .timeline__wave i {
+  transition: opacity 0.5s ease;
+}
+
+/* Parked until the cut is done, then one sweep — the victory lap. */
+.pipe__timeline .timeline__head {
+  opacity: 0;
+}
+
+.pipe__timeline.is-playing .timeline__head {
+  opacity: 1;
+  animation: pipe-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes pipe-sweep {
+  from {
+    left: 8%;
+  }
+  to {
+    left: 92%;
+  }
+}
+
+/* the finished cut ----------------------------------------------- */
+
+.pipe.is-done .site,
+.pipe.is-done .board {
+  display: none;
+}
+
+.pipe__result {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  animation: rise-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pipe__poster {
+  width: 100%;
+}
+
+.pipe__done h1 {
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.pipe__done p {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+.pipe__done .btn {
+  margin-top: 22px;
+}
+
+/* crew ----------------------------------------------------------- */
+
+.pipe__side {
+  position: sticky;
+  top: 26px;
+}
+
+.pipe__crew {
+  gap: 16px;
+}
+
+.pipe__crew .plan__item > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pipe__crew em {
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+/* tray ----------------------------------------------------------- */
+
+.tray {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.tray__head {
+  margin-bottom: 13px;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.tray__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12.5px;
+  color: var(--text);
+  animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chip b {
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.chip--color {
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
+.chip--color i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* log ------------------------------------------------------------ */
+
+.pipe__log {
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding: 22px var(--gutter) 30px;
+  min-height: 92px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.pipe__line {
+  color: var(--text-dim);
+  opacity: 0.45;
+  animation: rise-in 300ms ease both;
+}
+
+.pipe__line::before {
+  content: '› ';
+  opacity: 0.5;
+}
+
+.pipe__line[data-latest] {
+  color: var(--lime);
+  opacity: 1;
+}
+
+/* the beat — the one moment nothing moves ------------------------ */
+
+.pipe[data-beat] .site__block,
+.pipe[data-beat] .site__scan,
+.pipe[data-beat] .pipe__glow {
+  animation-play-state: paused;
+}
+
+.beat {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: var(--gutter);
+  background: rgba(9, 9, 9, 0.84);
+  backdrop-filter: blur(16px) saturate(120%);
+  animation: beat-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes beat-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0) saturate(100%);
+  }
+}
+
+.beat__eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.beat__format {
+  margin-top: 14px;
+  font-size: clamp(30px, 5vw, 58px);
+  letter-spacing: -0.03em;
+  background: linear-gradient(100deg, var(--lime) 20%, var(--yellow) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.beat__reason {
+  margin-top: 20px;
+  max-width: 46ch;
+  font-size: 16px;
+  animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+}
+
+/* An escape hatch, not a question — a link, so nobody has to press it. */
+.beat__switch {
+  margin-top: 26px;
+  border: 0;
+  background: none;
+  padding: 4px;
+  font-size: 14px;
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  animation: rise-in 520ms ease 420ms both;
+}
+
+.beat__switch:hover {
+  color: var(--text-hi);
+}
+
+.beat__options {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.beat__option {
+  padding: 11px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 14px;
+  color: var(--text-hi);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.beat__option:hover {
+  background: rgba(169, 255, 103, 0.12);
+  border-color: rgba(169, 255, 103, 0.5);
+}
+
+/* failure -------------------------------------------------------- */
+
+.pipe--error {
+  place-content: center;
+  justify-items: center;
+}
+
+.pipe__fail {
+  max-width: 44ch;
+  text-align: center;
+}
+
+.pipe__fail h1 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+
+.pipe__fail p {
+  margin: 16px 0 26px;
+}
+
+/* shared ---------------------------------------------------------- */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (max-width: 940px) {
+  .pipe__grid-main {
+    grid-template-columns: 1fr;
+  }
+
+  .pipe__side {
+    position: static;
+  }
+
+  .pipe__result {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The sweep and the collapse are the two things that would still
+     read as motion once durations are zeroed out globally. */
+  .site__scan {
+    display: none;
+  }
+
+  .site.is-falling {
+    opacity: 0;
+  }
+}

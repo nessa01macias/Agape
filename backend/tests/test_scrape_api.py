@@ -15,7 +15,7 @@ def test_list_templates_returns_known_templates():
 
 
 def test_scrape_success(monkeypatch):
-    async def fake_scrape(url: str, full: bool) -> ScrapedContent:
+    async def fake_scrape(url: str, full: bool, screenshots: int = 0) -> ScrapedContent:
         return ScrapedContent(
             source_url=url,
             title="Example",
@@ -35,7 +35,7 @@ def test_scrape_success(monkeypatch):
 
 
 def test_scrape_unreachable_url_returns_502(monkeypatch):
-    async def fake_scrape(url: str, full: bool) -> ScrapedContent:
+    async def fake_scrape(url: str, full: bool, screenshots: int = 0) -> ScrapedContent:
         raise ScrapeError(502, "Could not reach that URL")
 
     monkeypatch.setattr("agape.api.scrape", fake_scrape)
@@ -47,7 +47,7 @@ def test_scrape_unreachable_url_returns_502(monkeypatch):
 
 
 def test_scrape_timeout_returns_504(monkeypatch):
-    async def fake_scrape(url: str, full: bool) -> ScrapedContent:
+    async def fake_scrape(url: str, full: bool, screenshots: int = 0) -> ScrapedContent:
         raise ScrapeError(504, "Timed out reaching that URL")
 
     monkeypatch.setattr("agape.api.scrape", fake_scrape)

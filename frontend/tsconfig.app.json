@@ -7,6 +7,9 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
+    // The Remotion composition default-imports React and three, both of
+    // which ship as CJS.
+    "esModuleInterop": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",

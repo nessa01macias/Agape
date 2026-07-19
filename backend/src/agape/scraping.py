@@ -1,10 +1,17 @@
+import asyncio
 import os
 import re
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 
 from agape.models import ScrapedContent
+
+SCREENSHOT_TTL_NOTE = (
+    "Firecrawl screenshot URLs are signed and expire. Download and re-host them "
+    "before persisting a template that references them."
+)
 
 MICROLINK_TIMEOUT = 10.0
 FIRECRAWL_TIMEOUT = 30.0
@@ -51,15 +58,25 @@ async def fetch_microlink(client: httpx.AsyncClient, url: str) -> dict:
     return body.get("data", {})
 
 
-async def fetch_firecrawl(client: httpx.AsyncClient, url: str) -> dict:
+async def fetch_firecrawl(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    screenshot: bool = False,
+    full_page: bool = True,
+) -> dict:
     api_key = os.environ.get("FIRECRAWL_API_KEY")
     if not api_key:
         raise ScrapeError(500, "FIRECRAWL_API_KEY is not configured")
 
+    formats: list[object] = ["markdown", "html"]
+    if screenshot:
+        formats.append({"type": "screenshot", "fullPage": full_page})
+
     try:
         resp = await client.post(
-            "https://api.firecrawl.dev/v1/scrape",
-            json={"url": url, "formats": ["markdown", "html"]},
+            "https://api.firecrawl.dev/v2/scrape",
+            json={"url": url, "formats": formats},
             headers={"Authorization": f"Bearer {api_key}"},
             timeout=FIRECRAWL_TIMEOUT,
         )
@@ -110,9 +127,74 @@ def _extract_text_blocks_from_markdown(markdown: str) -> list[str]:
     return blocks
 
 
-async def scrape(url: str, full: bool) -> ScrapedContent:
+async def map_site(client: httpx.AsyncClient, url: str, limit: int) -> list[str]:
+    """Same-host, shallow-path pages worth shooting alongside the landing page.
+
+    Firecrawl's map returns whatever it has crawled, which for a large site is
+    mostly deep docs/jobs URLs. We want pages that look like a marketing site's
+    top level, so filter to the same host and at most one path segment.
+    """
+    api_key = os.environ.get("FIRECRAWL_API_KEY")
+    if not api_key:
+        return []
+
+    try:
+        resp = await client.post(
+            "https://api.firecrawl.dev/v2/map",
+            json={"url": url, "limit": 60},
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=FIRECRAWL_TIMEOUT,
+        )
+    except httpx.RequestError:
+        return []  # Extra shots are a bonus; never fail the scrape over them.
+
+    if resp.status_code != 200:
+        return []
+
+    host = urlparse(url).netloc.removeprefix("www.")
+    picked: list[str] = []
+    for link in (resp.json().get("links") or []):
+        href = link.get("url") if isinstance(link, dict) else link
+        if not isinstance(href, str):
+            continue
+        parts = urlparse(href)
+        if parts.netloc.removeprefix("www.") != host:
+            continue
+        # Shallow paths only. Two segments rather than one, because many sites
+        # locale-prefix their top level (stripe.com/nz/pricing).
+        depth = [seg for seg in parts.path.split("/") if seg]
+        if len(depth) > 2:
+            continue
+        if href.rstrip("/") == url.rstrip("/") or href in picked:
+            continue
+        picked.append(href)
+        if len(picked) >= limit:
+            break
+    return picked
+
+
+async def _shoot(client: httpx.AsyncClient, url: str) -> str | None:
+    """One viewport screenshot, or None — a failed extra shot is not fatal."""
+    try:
+        page = await fetch_firecrawl(client, url, screenshot=True, full_page=False)
+    except ScrapeError:
+        return None
+    return page.get("screenshot")
+
+
+async def scrape(url: str, full: bool, screenshots: int = 0) -> ScrapedContent:
     async with httpx.AsyncClient() as client:
-        meta = await fetch_microlink(client, url)
+        # Microlink is the fast path, but its free tier is rate-limited and
+        # times out on big sites. When a Firecrawl pass is coming anyway it
+        # returns the same fields (title/description/ogImage/favicon), so a
+        # metadata failure shouldn't sink the whole scrape.
+        deep = full or bool(screenshots)
+        try:
+            meta = await fetch_microlink(client, url)
+        except ScrapeError:
+            if not deep:
+                raise
+            meta = {}
 
         hero_image = (meta.get("image") or {}).get("url")
         content = ScrapedContent(
@@ -121,10 +203,12 @@ async def scrape(url: str, full: bool) -> ScrapedContent:
             description=meta.get("description") or "",
             hero_image=hero_image,
             images=[hero_image] if hero_image else [],
+            favicon=(meta.get("logo") or {}).get("url"),
+            accent=(meta.get("palette") or [None])[0],
         )
 
-        if full:
-            page = await fetch_firecrawl(client, url)
+        if full or screenshots:
+            page = await fetch_firecrawl(client, url, screenshot=bool(screenshots))
             html_images = _extract_images_from_html(page.get("html", ""), url)
             merged = list(content.images)
             for img in html_images:
@@ -134,5 +218,25 @@ async def scrape(url: str, full: bool) -> ScrapedContent:
             content.text_blocks = _extract_text_blocks_from_markdown(
                 page.get("markdown", "")
             )
+
+            # Firecrawl's metadata is richer than Microlink's on some sites;
+            # fill only what the metadata pass left empty.
+            fc_meta = page.get("metadata") or {}
+            content.title = content.title or fc_meta.get("title") or ""
+            content.description = content.description or fc_meta.get("description") or ""
+            if not content.hero_image and fc_meta.get("ogImage"):
+                content.hero_image = fc_meta["ogImage"]
+
+            landing = page.get("screenshot")
+            if landing:
+                content.screenshots.append(landing)
+
+        # Remaining shots come from other top-level pages, in parallel.
+        wanted = screenshots - len(content.screenshots)
+        if wanted > 0:
+            extra_urls = await map_site(client, url, wanted)
+            if extra_urls:
+                shots = await asyncio.gather(*(_shoot(client, u) for u in extra_urls))
+                content.screenshots.extend(s for s in shots if s)
 
         return content

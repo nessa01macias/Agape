@@ -25,11 +25,21 @@ class ScrapedContent(BaseModel):
     hero_image: str | None = None
     images: list[str] = Field(default_factory=list)
     text_blocks: list[str] = Field(default_factory=list)
+    screenshots: list[str] = Field(default_factory=list)
+    """Rendered page shots, widest/most representative first.
+
+    Signed Firecrawl URLs — they expire, so persist them before a template
+    that references them is rendered later. See `scraping.SCREENSHOT_TTL_NOTE`.
+    """
+    favicon: str | None = None
+    accent: str | None = None
 
 
 class ScrapeRequest(BaseModel):
     url: str
     full: bool = False
+    screenshots: int = Field(default=0, ge=0, le=6)
+    """How many rendered page shots to capture. Each costs a Firecrawl credit."""
 
 
 class ApplyRequest(BaseModel):

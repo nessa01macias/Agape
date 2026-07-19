@@ -7,16 +7,27 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "studio": "remotion studio",
+    "render": "remotion render Scene out/launch.mp4"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.2.0",
+    "@remotion/player": "4.0.494",
+    "@remotion/three": "4.0.494",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.6.2",
+    "remotion": "4.0.494",
+    "three": "^0.178.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@remotion/cli": "4.0.494",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.178.1",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",

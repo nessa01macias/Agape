@@ -1,5 +1,6 @@
 from agape.mapping import apply_template
 from agape.models import ScrapedContent, Template, TemplateSlot
+from agape.templates import get_template
 
 STORY_REEL = Template(
     id="story-reel",
@@ -115,3 +116,34 @@ def test_text_under_limit_is_not_truncated():
     by_id = {s.slot_id: s.content for s in result.slots}
 
     assert by_id["headline"] == "Short"
+
+
+def test_screenshots_backfill_empty_image_slots():
+    """A page with no usable <img> tags still fills its slots from screenshots."""
+    scraped = ScrapedContent(
+        source_url="https://example.com",
+        title="Example",
+        hero_image=None,
+        images=[],
+        screenshots=["https://shot/1.png", "https://shot/2.png"],
+    )
+    filled = apply_template(scraped, get_template("product-highlight"))
+    by_type = {s.slot_id: s.content for s in filled.slots}
+
+    assert by_type["hero"] == "https://shot/1.png"
+    assert by_type["bg-1"] == "https://shot/2.png"
+    # The body slot still warns (no text in this fixture); no image slot should.
+    assert not [w for w in filled.warnings if "image" in w]
+
+
+def test_screenshots_do_not_duplicate_scraped_images():
+    scraped = ScrapedContent(
+        source_url="https://example.com",
+        title="Example",
+        hero_image="https://img/hero.png",
+        images=["https://img/hero.png", "https://shot/1.png"],
+        screenshots=["https://shot/1.png"],
+    )
+    filled = apply_template(scraped, get_template("product-highlight"))
+    contents = [s.content for s in filled.slots if s.type in ("hero_image", "image")]
+    assert contents == ["https://img/hero.png", "https://shot/1.png"]
